@@ -1,3 +1,4 @@
+using namespace System.Reflection
 # TODO: Add comment help, use event args or editor context to load only the current file.
 function Update-FileReferenceList {
     [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseShouldProcessForStateChangingFunctions', '')]

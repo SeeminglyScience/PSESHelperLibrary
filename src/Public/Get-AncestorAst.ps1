@@ -1,3 +1,4 @@
+using namespace System.Reflection
 # TODO: Comment help.
 function Get-AncestorAst {
     [CmdletBinding()]
