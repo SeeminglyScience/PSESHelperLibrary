@@ -41,7 +41,7 @@ $PSESHLTemplates = @{
 }
 
 # Don't reference any files whose FullName match this regex.
-$PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1|\.psd1'
+$PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1'
 
 # Load all functions and classes.
 Get-ChildItem $PSScriptRoot\Classes, $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' |
