@@ -1,5 +1,4 @@
 function GetScriptFile {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseShouldProcessForStateChangingFunctions', '')]
     param(
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias('FullName')]

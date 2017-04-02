@@ -1,3 +1,4 @@
+using namespace System.Reflection
 function Get-ScriptExtent {
     <#
     .SYNOPSIS

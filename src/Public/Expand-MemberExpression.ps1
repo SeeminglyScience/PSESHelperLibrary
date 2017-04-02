@@ -1,248 +1,113 @@
 function Expand-MemberExpression {
     <#
     .SYNOPSIS
-        Builds the expression for accessing a member through reflection.
+        Builds an expression for accessing or invoking a member through reflection.
     .DESCRIPTION
-        Builds the expression for accessing a member through reflection.
+        Creates an expression for the closest MemberExpressionAst to the cursor in the current editor
+        context. This is mainly to assist with creating expressions to access private members of
+        .NET classes through reflection.
+
+        The expression is created using string templates.  There are templates for several ways of
+        accessing members including InvokeMember, GetProperty/GetValue, and a more verbose
+        GetMethod/Invoke.  If using the GetMethod/Invoke template it will automatically build type
+        expressions for the "types" argument including nonpublic and generic types. If a template
+        is not specified, this function will attempt to determine the most fitting template.  If you
+        have issues invoking a method with the default, try the VerboseInvokeMethod template.
+
+        Currently this only works with expressions on type literals (i.e. [string]) and will not work
+        with variables.  Even if a type cannot typically be resolved with a type literal, this function
+        will still work (e.g. [System.Management.Automation.SessionStateScope].SetFunction() will
+        still resolve)
     .INPUTS
         None
     .OUTPUTS
         None
     .EXAMPLE
         PS C:\> Expand-MemberExpression
-        Builds the expression for accessing a member through reflection.
+        Expands the member expression closest to the cursor in the current editor context using an
+        automatically determined template.
+    .EXAMPLE
+        PS C:\> Expand-MemberExpression -Template VerboseInvokeMethod
+        Expands the member expression closest to the cursor in the current editor context using the
+        VerboseInvokeMethod template.
     #>
     [CmdletBinding()]
-    param()
-    begin {
-        function getType ([Parameter(ValueFromPipeline)][string] $TypeName) {
-            process {
-                $type = $TypeName -as [type]
-                # If implicit casting doesn't work then it's probably a non public type.  To get the type
-                # without knowing what assembly it came from we have to search all of them.  FYI this is a lot
-                # faster then it looks.
-                if (-not $type) {
-                    $type = [AppDomain]::CurrentDomain.
-                        GetAssemblies().
-                        GetTypes().
-                        Where{ $PSItem.ToString() -match "$typeName$" }[0]
-                }
-                # TODO: Pull using statements from the ast to catch some edge cases.
-                if (-not $type) { throw 'Unable to find type ''{0}''.' -f $typeName }
-                $type
-            }
-        }
-        function getTypeExpression ([type] $Type) {
-            # If type is not public it can't be called with a type literal expression. The "best" way
-            # I know of is to use a type with the same assembly (and preferably a short name), then
-            # use that to get the assembly and invoke GetType.
+    param(
+        # Specifies the current editor context.
+        [Parameter(Position=0)]
+        [Microsoft.PowerShell.EditorServices.Extensions.EditorContext]
+        $Context,
 
-            # TODO: Add support for generic types with nonpublic type arguments. Example case is the
-            #       functionFactory parameter on SessionStateScope.SetFunction().  Need to use the
-            #       MakeGenericType() method.
-            if (-not $Type.IsPublic) {
-                $assembly = $Type.Assembly
-                $accelerators = [psobject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Get
-                $choices = $accelerators.GetEnumerator().
-                    Where{ $PSItem.Value.Assembly -eq $assembly }.Key
-
-                if (-not $choices) {
-                    $choices = $assembly.GetTypes().ToString()
-                }
-
-                $typeName = ($choices | Sort-Object -Property Length)[0]
-
-                return '[{0}].Assembly.GetType(''{1}'')' -f $typeName, $Type.ToString()
-            }
-            '[{0}]' -f $Type.ToString()
-        }
-    }
+        # Specifies the name of the template to use for building this expression. Templates are stored
+        # in the exported variable $PSESHLTemplates. If a template is not chosen one will be determined
+        # based on member type at runtime.
+        [ArgumentCompleter({ $PSESHLTemplates.MemberExpressions.Keys -like ($args[2] + '*') })]
+        [ValidateScript({ $PSItem -in $PSESHLTemplates.MemberExpressions.Keys })]
+        [string]
+        $TemplateName
+    )
     process {
         $ast = Get-AstAtCursor
 
-        if ($memberExpressionAst = Get-AncestorAst -Ast $ast -TargetAstType ([System.Management.Automation.Language.InvokeMemberExpressionAst])) {
-            $isMethodOrConstructor = $true
-        } else {
-            $memberExpressionAst = Get-AncestorAst -Ast $ast -TargetAstType ([System.Management.Automation.Language.MemberExpressionAst])
-        }
+        $memberExpressionAst = Get-AncestorAst -Ast $ast -TargetAstType ([System.Management.Automation.Language.MemberExpressionAst])
         if (-not $memberExpressionAst) { throw 'Unable to find a member expression ast near the current cursor location.' }
 
+        # TODO: Add support for different expressions like variables.  Need to check if there is a
+        #       method in editor services to call, or if we need to enumerate scopes.
         $typeName = $memberExpressionAst.Expression.TypeName.FullName
 
-        # TODO: Add support for different expressions like variables.  Need to create a CompletionContext
-        #       to use the GetInferredType method.
         if (-not $typeName) { throw 'Unable to find type name in member expression. The parent expression must be a type literal.' }
 
-        $type = getType -TypeName $typeName
+        $type       = GetType -TypeName $typeName
+        $memberName = $memberExpressionAst.Member.Value -replace '^new$', '.ctor'
 
-        if ($isMethodOrConstructor) {
-            if ($memberExpressionAst.Member.Value -eq 'new') {
-                $members = $type.GetConstructors([BindingFlags]'NonPublic,Public,Instance,Static,IgnoreCase')
-            } else {
-                $methods = $type.GetMethods([BindingFlags]'NonPublic,Public,Instance,Static,IgnoreCase')
-                $members = $methods.Where{ $PSItem.Name -eq $memberExpressionAst.Member.Value }
-            }
+        # TODO: Add a better way to select an overload.
 
-            <#
-                Check for overloads based on the following:
+        # Returns true if member name and parameter count match.
+        $predicate = {
+            param($Member, $Criteria)
 
-                -   If there is one argument and it is a int, check for members with a matching
-                    amount of parameters.
+            $nameFilter, $argCountFilter = $Criteria
 
-                -   If arguments is an array of type objects, check for matching parameter types.
-
-                -   If there are no arguments, check for a member with no parameters, else pick the
-                    first result.
-            #>
-            if ($memberExpressionAst.Arguments) {
-
-                $arguments = $memberExpressionAst.Arguments
-                # StaticType comes out as a RuntimeType which doesn't work with -is.
-                if ($arguments.Count -eq 1 -and $arguments.StaticType.Name -eq 'Int32') {
-
-                    $member = $members.Where{ $PSItem.GetParameters().Count -eq $arguments.Value }[0]
-
-                } elseif ($arguments.TypeName) {
-
-                    $argumentTypes = ($arguments.TypeName | getType) -as [type[]]
-                    $member = $members.Where{-not (
-                        Compare-Object -ReferenceObject  $PSItem.GetParameters().ParameterType `
-                                       -DifferenceObject $argumentTypes
-                    )}
-                }
-            } else {
-                $member = $members.Where{ -not $PSItem.GetParameters().Count }[0]
-
-                if (-not $member) { $member = $members[0] }
-            }
-        } else {
-            $properties = $type.GetProperties([BindingFlags]'NonPublic,Public,Instance,Static,IgnoreCase')
-            $member     = $properties.Where{ $PSItem.Name -eq $memberExpressionAst.Member.Value }[0]
-
-            if (-not $member) {
-                $fields = $type.GetFields([BindingFlags]'NonPublic,Public,Instance,Static,IgnoreCase')
-                $member = $fields.Where{ $PSItem.Name -eq $memberExpressionAst.Member.Value }[0]
-            }
+            $Member.Name -eq $nameFilter -and
+            (-not $argCountFilter -or $Member.GetParameters().Count -eq $argCountFilter)
         }
+
+        $member = $type.FindMembers(
+            <# memberType:     #> 'All',
+            <# bindingAttr:    #> [BindingFlags]'NonPublic, Public, Instance, Static, IgnoreCase',
+            <# filter:         #> $predicate,
+            <# filterCriteria: #> @($memberName, $memberExpressionAst.Arguments.Count)
+
+            # Prioritize properties over fields and methods with smaller parameter counts.
+        ) | Sort-Object -Property `
+            @{Expression = { $PSItem.MemberType }; Ascending = $false},
+            @{Expression = {
+                if ($PSItem -is [MethodBase]) { $PSItem.GetParameters().Count }
+                else { 0 }
+            }}
+
+        if ($member.Count -gt 1) { $member = $member[0] }
+
         if (-not $member) { throw 'Unable to find member ''{0}''.' -f $memberExpressionAst.Member.Value }
 
-        if ($member.IsStatic) {
-            $expression       = [System.Text.StringBuilder]::new("[$typeName].").AppendLine()
-            $staticOrInstance = 'Static'
-        } else {
-            $expression       = [System.Text.StringBuilder]::new('$targetHere.GetType().').AppendLine()
-            $staticOrInstance = 'Instance'
-        }
-
         # TODO: Is there a quick way to get editor indent settings?
-        $scriptFile   = GetScriptFile
-        $line         = $scriptFile.GetLine($memberExpressionAst.Extent.StartLineNumber)
-        $indent       = '    '
-        $indentOffset = [regex]::Match($line, '^\s*').Value + $indent
+        $scriptFile     = GetScriptFile
+        $line           = $scriptFile.GetLine($memberExpressionAst.Extent.StartLineNumber)
+        $indentOffset   = [regex]::Match($line, '^\s*').Value
 
-        # Add getter method (e.g. GetMethod, GetProperty, etc)
-        $expression.
-            Append($indentOffset).
-            Append('Get').
-            Append($member.MemberType).
-            AppendLine('(').
-            Append($indentOffset + $indent) | Out-Null
-
-        # Only add the name parameter if not a constructor because GetConstructor doesn't have it.
-        if ($member.MemberType -ne 'Constructor') {
-            $expression.
-                Append("<# name: #> '").
-                Append($member.Name).
-                AppendLine("',").
-                Append($indentOffset + $indent) | Out-Null
-        }
-
-        # I can't think of why you would use this for public members, but I'd rather not hard code
-        # NonPublic in just in case.
-        if ($member.IsPublic) {
-            $privateOrPublic = 'Public'
+        if ($TemplateName) {
+            $helper = [MemberTemplateHelper]::Create($member, $TemplateName)
         } else {
-            $privateOrPublic = 'NonPublic'
+            $helper = [MemberTemplateHelper]::Create($member)
         }
-        $expression.
-            Append("<# bindingAttr: #> [System.Reflection.BindingFlags]'").
-            Append($privateOrPublic).
-            Append(', ').
-            Append($staticOrInstance).
-            Append("'") | Out-Null
 
-        if ($isMethodOrConstructor)  {
-            $expression.
-                AppendLine(',').
-                Append($indentOffset + $indent).
-                AppendLine('<# binder: #> $null,').
-                Append($indentOffset + $indent).
-                Append('<# types: #> ') | Out-Null
+        $template = $PSESHLTemplates.MemberExpressions.($helper.TemplateName)
 
-            # If the method has parameters make a type[] object with the parameter types for
-            # the 'types' parameter.
-            $parameters = $member.GetParameters()
-            if ($parameters) {
-                $expression.Append('(') | Out-Null
-                for ($i = 0; $i -lt $parameters.Count; $i++) {
+        $expression = $template -f $helper.TemplateArguments `
+            -split '\r?\n' `
+            -join ([Environment]::NewLine + $indentOffset)
 
-                    $expression.Append((getTypeExpression -Type $parameters[$i].ParameterType)) | Out-Null
-
-                    if ($i -eq ($parameters.Count - 1)) {
-                        $expression.AppendLine(' -as [type[]]),') | Out-Null
-                    } else {
-                        $expression.Append(', ') | Out-Null
-                    }
-                }
-            } else {
-                $expression.AppendLine('[type[]]::new(0),') | Out-Null
-            }
-            $expression.
-                Append($indentOffset + $indent).
-                Append('<# modifiers: #> ').
-                AppendLine($member.GetParameters().Count).
-                Append($indentOffset).
-                Append(').Invoke(') | Out-Null
-
-            # Add the target parameter to invoke if this isn't a constructor.  If static make it null,
-            # if instance make it a placeholder variable. Also start the arguments variable with a
-            # starting array tag.
-            if ($member.MemberType -eq 'Constructor') {
-                $expression.Append('@(') | Out-Null
-            } else {
-                if ($member.IsStatic) {
-                    $expression.Append('$null, @(') | Out-Null
-                } else {
-                    $expression.Append('$targetHere, @(') | Out-Null
-                }
-            }
-
-            # Add each parameter along with a placeholder $null variable.  If no parameters, then
-            # just close the tag.
-            if ($parameters) {
-                $expression.AppendLine() | Out-Null
-                for ($i = 0; $i -lt $parameters.Count; $i++) {
-                    $expression.
-                        Append($indentOffset + $indent).
-                        Append("<# ").
-                        Append($parameters[$i].Name).
-                        Append(': #> $null') | Out-Null
-
-                    if ($i -eq ($parameters.Count - 1)) {
-                        $expression.AppendLine().
-                            Append($indentOffset).
-                            Append('))') | Out-Null
-                    } else {
-                        $expression.AppendLine(',') | Out-Null
-                    }
-                }
-            } else {
-                $expression.AppendLine('))') | Out-Null
-            }
-
-        # TODO: Check if expression is in an assignment and switch GetValue to SetValue if applicable.
-        } else { $expression.Append($indentOffset).AppendLine(').GetValue($targetHere)') | Out-Null }
-
-        Set-ExtentText -Extent $memberExpressionAst.Extent -Value ($expression.ToString())
+        Set-ExtentText -Extent $memberExpressionAst.Extent -Value $expression
     }
 }

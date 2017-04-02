@@ -1,3 +1,4 @@
+using namespace Microsoft.PowerShell.EditorServices
 # TODO: Finish comment help.
 function ConvertFrom-ScriptExtent {
     <#
