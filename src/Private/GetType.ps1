@@ -16,6 +16,7 @@ function GetType {
         PS C:\> 'System.Management.Automation.SessionStateScope' | GetType
         Returns a Type object for SessionStateScope.
     #>
+    [CmdletBinding()]
     param (
         # Specifies the type name to search for.
         [Parameter(Mandatory, ValueFromPipeline)]

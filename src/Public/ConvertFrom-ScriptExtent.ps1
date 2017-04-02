@@ -1,11 +1,12 @@
 using namespace Microsoft.PowerShell.EditorServices
-# TODO: Finish comment help.
+
 function ConvertFrom-ScriptExtent {
     <#
     .SYNOPSIS
         Converts IScriptExtent objects to some common EditorServices types.
     .DESCRIPTION
-        Converts IScriptExtent objects to some common EditorServices types.
+        Translates IScriptExtent object properties into constructors for some common PowerShell
+        EditorServices types.
     .INPUTS
         System.Management.Automation.Language.IScriptExtent
 
@@ -22,7 +23,7 @@ function ConvertFrom-ScriptExtent {
         }
         $sb.Ast.FindAll({$args[0].Value -eq 'Documents'}, $true) | ConvertFrom-ScriptExtent -BufferRange
 
-        Gets the buffer range of "Documents".
+        Gets the buffer range of the string expression "Documents".
     #>
     [CmdletBinding()]
     [OutputType([Microsoft.PowerShell.EditorServices.BufferRange],      ParameterSetName='BufferRange')]

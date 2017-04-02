@@ -5,15 +5,31 @@ function ConvertTo-ScriptExtent {
     .DESCRIPTION
         Converts position and range objects from PowerShellEditorServices to ScriptExtent objects.
     .INPUTS
-        None
+        System.Object
+
+        You can pass any object with any of the following properties.
+
+        StartLineNumber, StartLine, Line
+        EndLineNumber, EndLine
+        StartColumnNumber, StartColumn, Column
+        EndColumnNumber, EndColumn
+        StartOffsetNumber, StartOffset, Offset
+        EndOffsetNumber, EndOffset
+        StartBuffer, Start
+        EndBuffer, End
+
+        Objects of type IScriptExtent will be passed through with no processing.
     .OUTPUTS
-        None
+        System.Management.Automation.Language.IScriptExtent,
+        System.Management.Automation.Language.InternalScriptExtent
+
+        This function will return any IScriptExtent object passed without processing. Objects created
+        by this function will be of type InternalScriptExtent.
     .EXAMPLE
-        PS C:\> ConvertTo-ScriptExtent
-        Converts position and range objects from PowerShellEditorServices to ScriptExtent objects.
+        PS C:\> $psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent
+        Returns a InternalScriptExtent object of the currently selected range.
     #>
     [CmdletBinding()]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseOutputTypeCorrectly', '', Justification='PSSA does not seem to check implemented interfaces.  The current output tag is correct.')]
     [OutputType([System.Management.Automation.Language.IScriptExtent])]
     param(
         # This is here so we can pass script extent objects through without any processing.
@@ -22,36 +38,43 @@ function ConvertTo-ScriptExtent {
         [System.Management.Automation.Language.IScriptExtent]
         $InputObject,
 
+        # Specifies the starting line number.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByPosition')]
         [Alias('StartLine', 'Line')]
         [int]
         $StartLineNumber,
 
+        # Specifies the starting column number.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByPosition')]
         [Alias('StartColumn', 'Column')]
         [int]
         $StartColumnNumber,
 
+        # Specifies the ending line number.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByPosition')]
         [Alias('EndLine')]
         [int]
         $EndLineNumber,
 
+        # Specifies the ending column number.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByPosition')]
         [Alias('EndColumn')]
         [int]
         $EndColumnNumber,
 
+        # Specifies the starting offset number.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByOffset')]
         [Alias('StartOffset', 'Offset')]
         [int]
         $StartOffsetNumber,
 
+        # Specifies the ending offset number.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByOffset')]
         [Alias('EndOffset')]
         [int]
         $EndOffsetNumber,
 
+        # Specifies the path of the source script file.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByPosition')]
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByOffset')]
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
@@ -59,11 +82,13 @@ function ConvertTo-ScriptExtent {
         [string]
         $FileName,
 
+        # Specifies the starting buffer position.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
         [Alias('Start')]
         [Microsoft.PowerShell.EditorServices.BufferPosition]
         $StartBuffer,
 
+        # Specifies the ending buffer position.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
         [Alias('End')]
         [Microsoft.PowerShell.EditorServices.BufferPosition]

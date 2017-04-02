@@ -180,8 +180,8 @@ class MemberTemplateHelper {
 class MethodTemplateHelper : MemberTemplateHelper {
     hidden [object[]] $arguments;
 
-    MethodTemplateHelper ([MethodInfo] $member) : base ($member) {}
-    MethodTemplateHelper ([MethodInfo] $member, [string] $templateName) : base ($member, $templateName) {}
+    MethodTemplateHelper ([MethodBase] $member) : base ($member) {}
+    MethodTemplateHelper ([MethodBase] $member, [string] $templateName) : base ($member, $templateName) {}
 
     [string] GetInvokeAttribute () { return 'InvokeMethod' }
 
@@ -200,6 +200,7 @@ class MethodTemplateHelper : MemberTemplateHelper {
         }
         return $builder.ToString()
     }
+
     [string] GetTypes () {
         if ($this.arguments) {
             $builder = [System.Text.StringBuilder]::new('(')
@@ -215,6 +216,7 @@ class MethodTemplateHelper : MemberTemplateHelper {
             return '@()'
         }
     }
+
     [string] GetNames () { return "@('" + $this.arguments.Name -join "', '" + "')" }
     [string] GetArgumentCount () { return $this.member.GetParameters().Count }
     [string] GetTemplateName  () { return 'InvokeMember' }
@@ -226,5 +228,5 @@ class ConstructorTemplateHelper : MethodTemplateHelper {
     ConstructorTemplateHelper ([ConstructorInfo] $member, [string] $templateName) : base ($member, $templateName) {}
 
     [string] GetInvokeAttribute () { return 'CreateInstance' }
-    [string] GetMemberName      () { return "''" }
+    [string] GetMemberName      () { return '' }
 }

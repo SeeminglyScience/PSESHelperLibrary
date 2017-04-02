@@ -46,7 +46,7 @@ function Expand-MemberExpression {
         [string]
         $TemplateName
     )
-    process {
+    end {
         $ast = Get-AstAtCursor
 
         $memberExpressionAst = Get-AncestorAst -Ast $ast -TargetAstType ([System.Management.Automation.Language.MemberExpressionAst])
@@ -106,7 +106,8 @@ function Expand-MemberExpression {
 
         $expression = $template -f $helper.TemplateArguments `
             -split '\r?\n' `
-            -join ([Environment]::NewLine + $indentOffset)
+            -join ([Environment]::NewLine + $indentOffset) `
+            -replace '\t', '    '
 
         Set-ExtentText -Extent $memberExpressionAst.Extent -Value $expression
     }

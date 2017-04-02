@@ -28,52 +28,53 @@ function Import-WorkspaceFunctionSet {
     #>
     [CmdletBinding()]
     param()
+    end {
+        $files = $script:PSESData.GetWorkspaceFiles()
 
-    $files = $script:PSESData.GetWorkspaceFiles()
-
-    $testManifestSplat = @{
-        ErrorAction   = 'Ignore'
-        WarningAction = 'SilentlyContinue'
-    }
-    $files | Where-Object {
-        $PSItem -match '.psd1$' -and
-        # The match operator is added because ExportedCommands counts as not empty in if statements
-        # when empty.
-        (Test-ModuleManifest $PSItem @testManifestSplat).ExportedCommands.Keys -match '.'
-
-    } | ForEach-Object { Import-Module $PSItem -Force }
-
-    # Get the top level sesison state from execution context so we can invoke the function and type
-    # definitions in the global scope.
-    $context = $ExecutionContext.GetType().
-        GetField('_context', [BindingFlags]'Instance, NonPublic').
-        GetValue($ExecutionContext)
-
-    $topLevelState = $context.GetType().
-        GetProperty('TopLevelSessionState', [BindingFlags]'Instance, NonPublic').
-        GetValue($context)
-
-    $internal = [scriptblock].GetProperty('SessionStateInternal', [BindingFlags]'Instance, NonPublic')
-
-    $files | ForEach-Object {
-        $ast = [System.Management.Automation.Language.Parser]::ParseFile($PSItem, [ref]$null, [ref]$null)
-
-        $predicate = {
-            param ($Ast)
-            # Get type and function definitions. Skip FunctionDefinitionAst's in member definitions.
-            $Ast -is [System.Management.Automation.Language.TypeDefinitionAst] -or
-            ($Ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
-            $Ast.Parent -isnot [System.Management.Automation.Language.FunctionMemberAst])
+        $testManifestSplat = @{
+            ErrorAction   = 'Ignore'
+            WarningAction = 'SilentlyContinue'
         }
+        $files | Where-Object {
+            $PSItem -match '.psd1$' -and
+            # The match operator is added because ExportedCommands counts as not empty in if statements
+            # when empty.
+            (Test-ModuleManifest $PSItem @testManifestSplat).ExportedCommands.Keys -match '.'
 
-        $functionDefinitions = $ast.FindAll($predicate, $true)
+        } | ForEach-Object { Import-Module $PSItem -Force }
 
-        if ($functionDefinitions) {
-            $scriptblock = [scriptblock]::Create($functionDefinitions.Extent.Text)
+        # Get the top level sesison state from execution context so we can invoke the function and type
+        # definitions in the global scope.
+        $context = $ExecutionContext.GetType().
+            GetField('_context', [BindingFlags]'Instance, NonPublic').
+            GetValue($ExecutionContext)
 
-            $internal.SetValue($scriptblock, $topLevelState)
+        $topLevelState = $context.GetType().
+            GetProperty('TopLevelSessionState', [BindingFlags]'Instance, NonPublic').
+            GetValue($context)
 
-            . $scriptblock
+        $internal = [scriptblock].GetProperty('SessionStateInternal', [BindingFlags]'Instance, NonPublic')
+
+        $files | ForEach-Object {
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($PSItem, [ref]$null, [ref]$null)
+
+            $predicate = {
+                param ($Ast)
+                # Get type and function definitions. Skip FunctionDefinitionAst's in member definitions.
+                $Ast -is [System.Management.Automation.Language.TypeDefinitionAst] -or
+                ($Ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+                $Ast.Parent -isnot [System.Management.Automation.Language.FunctionMemberAst])
+            }
+
+            $functionDefinitions = $ast.FindAll($predicate, $true)
+
+            if ($functionDefinitions) {
+                $scriptblock = [scriptblock]::Create($functionDefinitions.Extent.Text)
+
+                $internal.SetValue($scriptblock, $topLevelState)
+
+                . $scriptblock
+            }
         }
     }
 }

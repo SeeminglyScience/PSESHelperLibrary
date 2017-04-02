@@ -30,7 +30,7 @@ $PSESData = [PSCustomObject]@{
             Where-Object FullName -NotMatch $PSESHLExcludeFromFileReferences |
             ForEach-Object -MemberName FullName
 }
-
+[System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
 $PSESHLTemplates = @{
     MemberExpressions = ConvertFrom-StringData @'
     InvokeMember={0}.InvokeMember(\n\t<# name: #> '{3}',\n\t<# invokeAttr: #> [System.Reflection.BindingFlags]'{4}, {1}',\n\t<# binder: #> $null,\n\t<# target: #> {2},\n\t<# args: #> @({5})\n)

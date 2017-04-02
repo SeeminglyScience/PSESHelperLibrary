@@ -1,19 +1,30 @@
 function Expand-Expression {
     <#
     .SYNOPSIS
-        Replaces an extent with the return value of it's text.
+        Replaces an extent with the return value of it's text as an expression.
     .DESCRIPTION
-        Replaces an extent with the return value of it's text.
+        Creates and invokes a scriptblock from the text at the specified extent.  The output is
+        then converted to a string object using the "Out-String" cmdlet and used to set the text at
+        the extent.
     .INPUTS
-        None
+        System.Management.Automation.Language.IScriptExtent
+
+        You can pass extents to invoke from the pipeline.
     .OUTPUTS
         None
     .EXAMPLE
-        PS C:\> Expand-Expression
-        Replaces an extent with the return value of it's text.
+        PS C:\> $psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent | Expand-Expression
+        Invokes the currently selected text and replaces it with it's output. This is also the default.
     #>
     [CmdletBinding()]
     param(
+        # Specifies the current editor context. This parameter is required by PSES to register as
+        # an EditorCommand.
+        [Parameter(Position=0)]
+        [ValidateNotNullOrEmpty()]
+        [Microsoft.PowerShell.EditorServices.Extensions.EditorContext]
+        $Context,
+
         # Specifies the extent to invoke.
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
@@ -35,7 +46,7 @@ function Expand-Expression {
             if ($parseErrors) { throw $parseErrors }
 
             $output = & ([scriptblock]::Create($object.Text)) | Out-String
-            # gci
+
             Set-ExtentText -Extent $object -Value $output
         }
     }

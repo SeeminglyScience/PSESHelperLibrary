@@ -1,4 +1,5 @@
 using namespace System.Reflection
+
 function Get-ScriptExtent {
     <#
     .SYNOPSIS
@@ -13,7 +14,7 @@ function Get-ScriptExtent {
     .OUTPUTS
         System.Management.Automation.Language.IScriptExtent
 
-        The combined extent is outputted.
+        The combined extent is returned.
     .EXAMPLE
         PS C:\> $sb = {
                 'This is a scriptblock'

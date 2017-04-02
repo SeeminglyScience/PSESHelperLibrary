@@ -1,20 +1,23 @@
-# TODO: Finish comment help.
 function Set-ExtentText {
     <#
     .SYNOPSIS
-        Description
+        Replaces text at a specified IScriptExtent object.
     .DESCRIPTION
-        Description
+        Uses the PowerShell EditorServices API to replace text an extent. ScriptExtent objects can
+        be found as a property on any object inherited from System.Management.Automation.Language.Ast.
     .INPUTS
-        None
+        System.Management.Automation.Language.IScriptExtent
+
+        You can pass script extent objects to this function.  You can also pass objects with a property
+        named "Extent".
     .OUTPUTS
         None
     .EXAMPLE
         PS C:\> $psEditor.GetEditorContext().CurrentFile.Tokens |
-            Where-Object Text -eq '=' |
-            Set-ExtentText -Value '?'
+            Where-Object Text -ceq 'get-childitem' |
+            Set-ExtentText -Value 'Get-ChildItem'
 
-        Changes all equal signs in the current file to question marks for some reason.
+        Replaces all instances of 'get-childitem' with 'Get-ChildItem'
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
@@ -33,7 +36,7 @@ function Set-ExtentText {
 
         if ($PSCmdlet.ShouldProcess((
             'Changing ''{0}'' to ''{1}''' -f $currentFile.GetText($bufferRange), $Value
-        ))) {
+        ), '', '')) {
             $psEditor.GetEditorContext().CurrentFile.InsertText($Value, $bufferRange)
         }
     }

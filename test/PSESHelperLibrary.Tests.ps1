@@ -6,4 +6,3 @@ Describe 'Module Manifest Tests' {
         Test-ModuleManifest -Path $moduleManifestPath | should not beNullOrEmpty
     }
 }
-
