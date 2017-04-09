@@ -78,9 +78,9 @@ function ConvertTo-ScriptExtent {
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByPosition')]
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByOffset')]
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
-        [Alias('File')]
+        [Alias('File', 'FileName')]
         [string]
-        $FileName,
+        $FilePath,
 
         # Specifies the starting buffer position.
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
@@ -107,8 +107,8 @@ function ConvertTo-ScriptExtent {
 
         # We use the FileContext from GetEditorContext here as well, but we'd have to create a BufferRange
         # to get line text.
-        if (-not $File) { $File = $psEditor.GetEditorContext().CurrentFile.Ast.Extent.File }
-        $scriptFile  = GetScriptFile -Path $File
+        if (-not $FilePath) { $FilePath = $psEditor.GetEditorContext().CurrentFile.Ast.Extent.File }
+        $scriptFile  = GetScriptFile -Path $FilePath
         $startOffset = $scriptFile.GetOffsetAtPosition($StartLineNumber, $StartColumnNumber)
         $endOffset   = $startOffset
 

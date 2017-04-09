@@ -1,4 +1,6 @@
 using namespace System.Reflection
+using namespace System.Collections.ObjectModel
+using namespace System.Management.Automation.Language
 
 class TypeExpressionHelper {
     [type] $Type;
@@ -109,60 +111,68 @@ class TypeExpressionHelper {
 }
 
 class MemberTemplateHelper {
-    [string[]] $TemplateArguments;
     [string] $TemplateName;
 
     hidden [string] $source;
     hidden [string] $target;
-    hidden [hashtable] $valueMap;
+    hidden [string] $memberName;
+    hidden [string] $invokeAttribute;
+    hidden [string] $arguments;
+    hidden [string] $types;
+    hidden [string] $argumentCount;
+    hidden [string] $singleArgument;
     hidden [System.Reflection.MemberInfo] $member;
     hidden [string] $indent = '    ';
 
     MemberTemplateHelper ([MemberInfo] $member) {
-        $this.member = $member
-        $this.TemplateName = $this.GetTemplateName()
-        $this.Initialize()
-    }
-    MemberTemplateHelper ([MemberInfo] $member, [string] $templateName) {
-        $this.member = $member
-        $this.TemplateName = $templateName
-
-        if (-not $this.TemplateName) {
-            $this.TemplateName = $this.GetTemplateName()
+        if (-not $member) {
+            throw [ArgumentNullException]::new('member')
         }
-
+        $this.member = $member
+        $this.GetTemplateName()
         $this.Initialize()
     }
-    [void] Initialize () {
-        if ($this.member.IsStatic) {
+    hidden [void] Initialize () {
+        if ($this.member.IsStatic -or $this.member.MemberType -eq 'Constructor') {
             $this.source = [TypeExpressionHelper]::Create($this.member.ReflectedType)
             $this.target  = '$null'
         } else {
             $this.source = '$targetHere.GetType()'
             $this.target = '$targetHere'
         }
-        $this.TemplateArguments = @(
+        $this.GetMemberName()
+        $this.GetInvokeAttribute()
+        $this.GetArguments()
+        $this.GetTypes()
+        $this.GetArgumentCount()
+        $this.GetSingleArgument()
+    }
+    [object[]] GetTemplateArguments () {
+        return @(
             $this.source
             $this.GetBindingFlags()
             $this.target
-            $this.GetMemberName()
-            $this.GetInvokeAttribute()
-            $this.GetArguments()
-            $this.GetTypes()
-            $this.GetArgumentCount()
-            $this.GetSingleArgument()
+            $this.memberName
+            $this.invokeAttribute
+            $this.arguments
+            $this.types
+            $this.argumentCount
+            $this.singleArgument
+            $this.member.MemberType
         )
     }
-
-    [string] GetTemplateName    () { return 'GetValue' }
-    [string] GetSource          () { return '$target.GetType()' }
-    [string] GetMemberName      () { return $this.member.Name }
-    [string] GetInvokeAttribute () { return 'Get{0}' -f $this.member.MemberType }
-    [string] GetArguments       () { return '' }
-    [string] GetTypes           () { return '@()' }
-    [string] GetArgumentCount   () { return '0' }
-    [string] GetSingleArgument  () { return '$null' }
-    [string] GetBindingFlags    () {
+    [string] ToString () {
+        return $global:PSESHLTemplates.MemberExpressions.($this.TemplateName) -f $this.GetTemplateArguments()
+    }
+    hidden [void] GetTemplateName    () { $this.TemplateName = 'GetValue' }
+    hidden [void] GetSource          () { $this.source = '$target.GetType()' }
+    hidden [void] GetMemberName      () { $this.memberName = $this.member.Name }
+    hidden [void] GetInvokeAttribute () { $this.invokeAttribute = 'Get{0}' -f $this.member.MemberType }
+    hidden [void] GetArguments       () { $this.arguments = '' }
+    hidden [void] GetTypes           () { $this.types = '@()' }
+    hidden [void] GetArgumentCount   () { $this.argumentCount = '0' }
+    hidden [void] GetSingleArgument  () { $this.singleArgument = '$null' }
+    hidden [string] GetBindingFlags  () {
         return $this.member.GetType().
             GetProperty('BindingFlags', [BindingFlags]'Instance, NonPublic').
             GetValue($this.member).
@@ -172,25 +182,23 @@ class MemberTemplateHelper {
     static        [MemberTemplateHelper] Create ([MemberInfo] $member) { return [MemberTemplateHelper]::new($member) }
     hidden static [MemberTemplateHelper] Create ([MethodInfo] $member) { return [MethodTemplateHelper]::new($member) }
     hidden static [MemberTemplateHelper] Create ([ConstructorInfo] $member) { return [ConstructorTemplateHelper]::new($member) }
-    static        [MemberTemplateHelper] Create ([MemberInfo] $member, [string] $templateName) { return [MemberTemplateHelper]::new($member, $templateName) }
-    hidden static [MemberTemplateHelper] Create ([MethodInfo] $member, [string] $templateName) { return [MethodTemplateHelper]::new($member, $templateName) }
-    hidden static [MemberTemplateHelper] Create ([ConstructorInfo] $member, [string] $templateName) { return [ConstructorTemplateHelper]::new($member, $templateName) }
 }
 
 class MethodTemplateHelper : MemberTemplateHelper {
-    hidden [object[]] $arguments;
+    hidden [object[]] $memberArguments;
 
     MethodTemplateHelper ([MethodBase] $member) : base ($member) {}
-    MethodTemplateHelper ([MethodBase] $member, [string] $templateName) : base ($member, $templateName) {}
 
-    [string] GetInvokeAttribute () { return 'InvokeMethod' }
+    hidden [void] GetInvokeAttribute () { $this.invokeAttribute = 'InvokeMethod' }
 
-    [string] GetArguments () {
-        $this.arguments = $this.member.GetParameters()
+    hidden [void] GetSingleArgument () { $this.singleArgument = $null }
+
+    hidden [void] GetArguments () {
+        $this.memberArguments = $this.member.GetParameters()
         $builder = [System.Text.StringBuilder]::new()
 
-        if ($this.arguments) {
-            foreach ($argument in $this.arguments) {
+        if ($this.memberArguments) {
+            foreach ($argument in $this.memberArguments) {
                 $builder.
                     AppendLine().
                     Append($this.indent * 2).
@@ -198,35 +206,95 @@ class MethodTemplateHelper : MemberTemplateHelper {
             }
             $builder.Remove($builder.Length-1, 1).AppendLine().Append($this.indent)
         }
-        return $builder.ToString()
+        $this.arguments = $builder.ToString()
     }
 
-    [string] GetTypes () {
-        if ($this.arguments) {
+    hidden [void] GetTypes () {
+        if ($this.memberArguments) {
             $builder = [System.Text.StringBuilder]::new('(')
-            foreach ($argument in $this.arguments) {
+            foreach ($argument in $this.memberArguments) {
                 $builder.
                     Append([TypeExpressionHelper]::Create($argument.ParameterType)).
                     Append(', ')
             }
-            return $builder.
+            $this.types = $builder.
                 Remove($builder.Length-2, 1).
                 Append('-as [type[]])').ToString()
         } else {
-            return '@()'
+            $this.types = '@()'
         }
     }
 
-    [string] GetNames () { return "@('" + $this.arguments.Name -join "', '" + "')" }
-    [string] GetArgumentCount () { return $this.member.GetParameters().Count }
-    [string] GetTemplateName  () { return 'InvokeMember' }
+    hidden [void] GetNames          () { $this.names = "@('" + $this.memberArguments.Name -join "', '" + "')" }
+    hidden [void] GetArgumentCount  () { $this.argumentCount = $this.member.GetParameters().Count }
+    hidden [void] GetTemplateName   () { $this.TemplateName  = 'InvokeMember' }
 }
 
 class ConstructorTemplateHelper : MethodTemplateHelper {
 
     ConstructorTemplateHelper ([ConstructorInfo] $member) : base ($member) {}
-    ConstructorTemplateHelper ([ConstructorInfo] $member, [string] $templateName) : base ($member, $templateName) {}
 
-    [string] GetInvokeAttribute () { return 'CreateInstance' }
-    [string] GetMemberName      () { return '' }
+    hidden [void] GetInvokeAttribute () { $this.invokeAttribute = 'CreateInstance' }
+    hidden [void] GetMemberName      () { $this.memberName = '' }
+}
+class ExtendedMemberExpressionAst : MemberExpressionAst {
+    [type] $InferredType;
+    [bool] $IsPublic;
+    [bool] $IsOverload;
+    [MemberInfo] $InferredMember;
+    [BindingFlags] $BindingFlags;
+    [ReadOnlyCollection[ExpressionAst]] $Arguments;
+
+    ExtendedMemberExpressionAst ([IScriptExtent] $extent,
+              [ExpressionAst] $expression,
+              [CommandElementAst] $member,
+              [bool] $static,
+              [ReadOnlyCollection[ExpressionAst]] $arguments) : base($extent, $expression, $member, $static) {
+
+        try {
+            $this.Arguments      = $arguments
+            $this.InferredMember = GetInferredMember -Ast $this
+            $this.InferredType   = ($this.InferredMember.ReturnType,
+                                    $this.InferredMember.PropertyType,
+                                    $this.InferredMember.FieldType).
+                                    ForEach{ if ($PSItem) { $PSItem }}[0]
+
+            $this.BindingFlags   = $this.InferredMember.GetType().
+                GetProperty('BindingFlags', [BindingFlags]'Instance, NonPublic').
+                GetValue($this.InferredMember)
+
+            $this.IsPublic       = $this.BindingFlags.HasFlag([BindingFlags]::Public)
+
+            try {
+                $this.InferredMember.ReflectedType.GetMember($this.InferredMember.Name, $this.BindingFlags)
+                $this.IsOverload = $false
+            } catch [AmbiguousMatchException] {
+                $this.IsOverload = $true
+            }
+        } catch {
+            $this.InferredType = [object]
+        }
+    }
+    static [ExtendedMemberExpressionAst] op_Implicit ([MemberExpressionAst] $ast) {
+
+        $expression = $ast.Expression.Copy()
+        if ($expression -is [MemberExpressionAst]) {
+            $expression = [ExtendedMemberExpressionAst]$expression
+        }
+        $newAst = [ExtendedMemberExpressionAst]::new(
+            $ast.Extent,
+            $expression,
+            $ast.Member.Copy(),
+            $ast.Static,
+            $ast.Arguments
+        )
+
+        if ($ast.Parent) {
+            $ast.Parent.GetType().
+                GetMethod('SetParent', [BindingFlags]'Instance, NonPublic').
+                Invoke($ast.Parent, $newAst)
+        }
+
+        return $newAst
+    }
 }

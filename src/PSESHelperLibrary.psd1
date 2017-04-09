@@ -32,6 +32,7 @@ FunctionsToExport = 'Start-SymbolFinderWorkaround',
                     'Expand-Expression',
                     'Get-ScriptExtent',
                     'Get-AncestorAst',
+                    'Get-AstAtCursor',
                     'Set-ExtentText'
 
 

@@ -35,8 +35,9 @@ $PSESHLTemplates = @{
     MemberExpressions = ConvertFrom-StringData @'
     InvokeMember={0}.InvokeMember(\n\t<# name: #> '{3}',\n\t<# invokeAttr: #> [System.Reflection.BindingFlags]'{4}, {1}',\n\t<# binder: #> $null,\n\t<# target: #> {2},\n\t<# args: #> @({5})\n)
     GetValue={0}.\n\t{4}('{3}', [System.Reflection.BindingFlags]'{1}').\n\tGetValue({2})
-    SetValue={0}.\n\t{4}('{3}', [System.Reflection.BindingFlags]'{2}').\n\tSetValue({3}, {8})
-    VerboseInvokeMethod={0}.\n\tGetMethod(\n\t\t<# name: #> '{3}',\n\t\t<# bindingAttr: #> [System.Reflection.BindingFlags]'{1}',\n\t\t<# binder: #> $null,\n\t\t<# types: #> {6},\n\t\t<# modifiers: #> {7}\n\t).Invoke({2}, @({5}))
+    SetValue={0}.\n\t{4}('{3}', [System.Reflection.BindingFlags]'{1}').\n\tSetValue({2}, {8})
+    ParameterlessInvoke={0}.\n\tGet{9}('{3}', [System.Reflection.BindingFlags]'{1}').\n\tInvoke({2}, @({8}))
+    VerboseInvokeMethod={0}.\n\tGet{9}(\n\t\t<# name: #> '{3}',\n\t\t<# bindingAttr: #> [System.Reflection.BindingFlags]'{1}',\n\t\t<# binder: #> $null,\n\t\t<# types: #> {6},\n\t\t<# modifiers: #> {7}\n\t).Invoke({2}, @({5}))
 '@
 }
 
