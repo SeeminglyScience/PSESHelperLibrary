@@ -7,8 +7,8 @@ function Expand-MemberExpression {
         Builds an expression for accessing or invoking a member through reflection.
     .DESCRIPTION
         Creates an expression for the closest MemberExpressionAst to the cursor in the current editor
-        context. This is mainly to assist with creating expressions to access private members of
-        .NET classes through reflection.
+        context. This is mainly to assist with creating expressions to access private members of .NET
+        classes through reflection.
 
         The expression is created using string templates.  There are templates for several ways of
         accessing members including InvokeMember, GetProperty/GetValue, and a more verbose
