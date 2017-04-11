@@ -32,13 +32,22 @@ is not specified, this function will attempt to determine the most fitting templ
 If you
 have issues invoking a method with the default, try the VerboseInvokeMethod template.
 
-Currently this only works with expressions on type literals (i.e.
-\[string\]) and will not work
-with variables. 
-Even if a type cannot typically be resolved with a type literal, this function
-will still work (e.g.
-\[System.Management.Automation.SessionStateScope\].SetFunction() will
-still resolve)
+This function currently works on member expressions attached to the following:
+
+1.
+Type literal expressions (including invalid expressions with non public types)
+
+2.
+Variable expressions where the variable exists within a currently existing scope.
+
+3.
+Any other scenario where standard completion works.
+
+4.
+Any number of nested member expressions where one of the above is true at some point in
+   the chain.
+Additionally chains may break if a member returns a type that is too generic
+   like System.Object or a vague interface.
 
 ## EXAMPLES
 

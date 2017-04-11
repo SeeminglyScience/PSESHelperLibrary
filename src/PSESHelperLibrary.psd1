@@ -69,10 +69,10 @@ PrivateData = @{
         # Tags = @()
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/SeeminglyScience/PSESHelperLibrary'
 
         # A URL to an icon representing this module.
         # IconUri = ''
