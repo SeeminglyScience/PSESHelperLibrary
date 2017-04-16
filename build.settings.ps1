@@ -4,7 +4,20 @@
 
 Properties {
     # ----------------------- Basic properties --------------------------------
-
+    # These are mocked in the module as well, but PSSA will still fail if it isn't mocked here as well.
+    $mockSplat = @{
+        MemberDefinition = 'private object mock;'
+        IgnoreWarnings   = $true
+        WarningAction    = 'SilentlyContinue'
+        Namespace        = 'Microsoft.PowerShell.EditorServices'
+    }
+    'BufferRange', 'BufferPosition' | ForEach-Object {
+        Add-Type -Name $PSItem @mockSplat
+    }
+    $mockSplat.Namespace = 'Microsoft.PowerShell.EditorServices.Extensions'
+    'EditorCommand', 'EditorContext' | ForEach-Object {
+        Add-Type -Name $PSItem @mockSplat
+    }
     # The root directories for the module's docs, src and test.
     [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseDeclaredVarsMoreThanAssigments', '')]
     $DocsRootDir = "$PSScriptRoot\docs"

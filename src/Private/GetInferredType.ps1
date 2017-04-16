@@ -76,8 +76,8 @@ function GetInferredType {
                 ErrorAction   = 'Ignore'
                 WarningAction = 'Ignore'
             }
-            $workspaceModuleGuids = $script:PSESData.GetWorkspaceFiles() |
-                Where-Object { $PSItem -match '.psd1$' } |
+            $workspaceModuleGuids = GetWorkspaceFile |
+                Where-Object FullName -match '.psd1$' |
                 Test-ModuleManifest @silent |
                 Where-Object Guid -NotMatch '^[0-]*$' |
                 ForEach-Object Guid

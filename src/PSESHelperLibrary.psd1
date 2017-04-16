@@ -26,7 +26,6 @@ FunctionsToExport = 'Start-SymbolFinderWorkaround',
                     'Import-WorkspaceFunctionSet',
                     'Update-FileReferenceList',
                     'ConvertFrom-ScriptExtent',
-                    'ConvertTo-SubExpression',
                     'Expand-MemberExpression',
                     'ConvertTo-ScriptExtent',
                     'Expand-Expression',
@@ -46,19 +45,32 @@ VariablesToExport = 'PSESHLExcludeFromFileReferences', 'PSESHLTemplates'
 AliasesToExport = @()
 
 # List of all files packaged with this module
-FileList =  'Public\Start-SymbolFinderWorkaround.ps1',
+FileList =  'Private\ImportEditorCommandMetadata.ps1',
+            'Public\Start-SymbolFinderWorkaround.ps1',
             'Public\Import-WorkspaceFunctionSet.ps1',
             'Public\Update-FileReferenceList.ps1',
             'Public\ConvertFrom-ScriptExtent.ps1',
-            'Public\ConvertTo-SubExpression.ps1',
             'Public\Expand-MemberExpression.ps1',
             'Public\ConvertTo-ScriptExtent.ps1',
+            'Private\ImportBinderMetadata.ps1',
+            'Private\TryGetEditorContext.ps1',
+            'Private\GetInferredMember.ps1',
             'Public\Expand-Expression.ps1',
+            'Private\GetWorkspaceFile.ps1',
             'Public\Get-ScriptExtent.ps1',
+            'Private\GetInferredType.ps1',
             'Public\Get-AncestorAst.ps1',
+            'Public\Get-AstAtCursor.ps1',
             'Public\Set-ExtentText.ps1',
             'Private\GetScriptFile.ps1',
-            'Private\TestSelection.ps1'
+            'Classes\Expressions.ps1',
+            'PSESHelperLibrary.psd1',
+            'PSESHelperLibrary.psm1',
+            'Classes\Attributes.ps1',
+            'Classes\Metadata.ps1',
+            'Private\GetType.ps1'
+
+
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{

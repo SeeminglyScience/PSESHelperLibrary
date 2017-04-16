@@ -162,7 +162,7 @@ class MemberTemplateHelper {
         )
     }
     [string] ToString () {
-        return $global:PSESHLTemplates.MemberExpressions.($this.TemplateName) -f $this.GetTemplateArguments()
+        return $script:PSESHLTemplates.MemberExpressions.($this.TemplateName) -f $this.GetTemplateArguments()
     }
     hidden [void] GetTemplateName    () { $this.TemplateName = 'GetValue' }
     hidden [void] GetSource          () { $this.source = '$target.GetType()' }

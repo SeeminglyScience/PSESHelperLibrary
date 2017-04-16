@@ -1,35 +1,33 @@
-using namespace Microsoft.PowerShell.EditorServices
+if ($psEditor) {
 
-$flags              = [System.Reflection.BindingFlags]'NonPublic, Instance'
-$editorOperations   = $psEditor.        GetType().GetField('editorOperations',  $flags).GetValue($psEditor)
-$extensionService   = $psEditor.        GetType().GetField('extensionService',  $flags).GetValue($psEditor)
-$editorSession      = $editorOperations.GetType().GetField('editorSession',     $flags).GetValue($editorOperations)
-$languageServer     = $editorOperations.GetType().GetField('messageSender',     $flags).GetValue($editorOperations)
+    $EditorOperations = $psEditor.GetType().
+        GetField('editorOperations', [System.Reflection.BindingFlags]'Instance, NonPublic').
+        GetValue($psEditor)
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '')]
-$PSESData = [PSCustomObject]@{
-    EditorOperations    = $editorOperations
-    ExtensionService    = $extensionService
-    EditorSession       = $editorSession
-    LanguageServer      = $languageServer
-} | Add-Member  -MemberType ScriptProperty `
-                -Name       CurrentScriptFile `
-                -PassThru `
-                -Value {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Script variable used throughout the module.')]
+    $EditorSession = $EditorOperations.GetType().
+        GetField('editorSession', [System.Reflection.BindingFlags]'Instance, NonPublic').
+        GetValue($EditorOperations)
 
-    $psEditor.GetEditorContext().CurrentFile.GetType().
-        GetField('scriptFile', [System.Reflection.BindingFlags]'NonPublic, Instance').
-        GetValue($psEditor.GetEditorContext().CurrentFile)
+} else {
 
-} | Add-Member  -MemberType ScriptMethod `
-                -Name       GetWorkspaceFiles `
-                -PassThru `
-                -Value {
-
-    Get-ChildItem -Path $psEditor.Workspace.Path -Filter '*.ps*1' -Recurse |
-            Where-Object FullName -NotMatch $PSESHLExcludeFromFileReferences |
-            ForEach-Object -MemberName FullName
+    # This is to avoid parsing errors when loaded outside of the integrated console. Primarily to
+    # enable build tasks from VSCode's task runner.
+    $mockSplat = @{
+        MemberDefinition = 'private object mock;'
+        IgnoreWarnings   = $true
+        WarningAction    = 'SilentlyContinue'
+        Namespace        = 'Microsoft.PowerShell.EditorServices'
+    }
+    'BufferRange', 'BufferPosition' | ForEach-Object {
+        Add-Type -Name $PSItem @mockSplat
+    }
+    $mockSplat.Namespace = 'Microsoft.PowerShell.EditorServices.Extensions'
+    'EditorCommand', 'EditorContext' | ForEach-Object {
+        Add-Type -Name $PSItem @mockSplat
+    }
 }
+
 [System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
 $PSESHLTemplates = @{
     MemberExpressions = ConvertFrom-StringData @'
@@ -42,13 +40,21 @@ $PSESHLTemplates = @{
 }
 
 # Don't reference any files whose FullName match this regex.
+[System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
 $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1'
 
-# Load all functions and classes.
-Get-ChildItem $PSScriptRoot\Classes, $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' |
+. "$PSScriptRoot\Classes\Metadata.ps1"
+. "$PSScriptRoot\Classes\Expressions.ps1"
+. "$PSScriptRoot\Classes\Attributes.ps1"
+
+Get-ChildItem $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' |
     ForEach-Object {
         . $PSItem.FullName
     }
+
+if ($psEditor) {
+   ImportEditorCommandMetadata
+}
 
 # Export only the functions using PowerShell standard verb-noun naming.
 # Be sure to list each exported functions in the FunctionsToExport field of the module manifest file.

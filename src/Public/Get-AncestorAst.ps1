@@ -18,16 +18,10 @@ function Get-AncestorAst {
                                 -TargetAstType ([System.Management.Automation.Language.FunctionDefinitionAst])
         Returns the FunctionDefinitionAst of the function that the cursor is currently inside.
     #>
+    [PSEditorCommand(SkipRegister)]
     [CmdletBinding()]
     param(
-        # Specifies the current editor context. The smallest ast closest to the current cursor
-        # position will be used as a starting point.
-        [Parameter(Mandatory, ParameterSetName='Context')]
-        [Microsoft.PowerShell.EditorServices.Extensions.EditorContext]
-        $Context,
-
         # Specifies the starting ast.
-        [Parameter(Mandatory, ParameterSetName='Ast')]
         [System.Management.Automation.Language.Ast]
         $Ast,
 
@@ -38,7 +32,8 @@ function Get-AncestorAst {
         $TargetAstType
     )
     end {
-        if ($PSCmdlet.ParameterSetName -eq $Context) {
+        if (-not $Ast) {
+            TryGetEditorContext
             $Ast = Get-AstAtCursor -Context $Context
         }
         if (-not $Ast) { return }

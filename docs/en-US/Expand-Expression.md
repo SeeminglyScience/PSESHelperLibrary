@@ -12,7 +12,7 @@ Replaces an extent with the return value of it's text as an expression.
 ## SYNTAX
 
 ```
-Expand-Expression [[-Context] <EditorContext>] [-InputObject <IScriptExtent[]>] [<CommonParameters>]
+Expand-Expression [[-InputObject] <IScriptExtent[]>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -33,23 +33,6 @@ This is also the default.
 
 ## PARAMETERS
 
-### -Context
-Specifies the current editor context.
-This parameter is required by PSES to register as
-an EditorCommand.
-
-```yaml
-Type: EditorContext
-Parameter Sets: (All)
-Aliases: 
-
-Required: False
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -InputObject
 Specifies the extent to invoke.
 
@@ -59,7 +42,7 @@ Parameter Sets: (All)
 Aliases: Extent
 
 Required: False
-Position: Named
+Position: 1
 Default value: ($psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent)
 Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False

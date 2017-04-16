@@ -80,7 +80,11 @@ function Start-SymbolFinderWorkaround {
         }
         # Create the object that handles updating the cross workspace file reference list.
         if ($PSCmdlet.ShouldProcess('Replacing HandleDidOpenTextDocumentNotification method in the PSES language server.', '', '')) {
-            [ProxyLanguageServer]::new($script:PSESData.LanguageServer) | Out-Null
+            $languageServer = $script:EditorOperations.GetType().
+                GetField('messageSender', [System.Reflection.BindingFlags]'Instance, NonPublic').
+                GetValue($script:EditorOperations)
+
+            [ProxyLanguageServer]::new($languageServer) | Out-Null
         }
         if ($PSCmdlet.ShouldProcess('Updating file reference list in PSES cache.', '', '')) {
             Update-FileReferenceList

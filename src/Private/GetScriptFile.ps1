@@ -36,7 +36,7 @@ function GetScriptFile {
             [string]$file = Resolve-Path $file -ErrorAction Stop
 
             # If case doesn't match it'll add a second entry to workspaceFiles.
-            $script:PSESData.EditorSession.Workspace.GetFile($file.ToLower())
+            $script:EditorSession.Workspace.GetFile($file.ToLower())
         }
     }
 }

@@ -10,10 +10,11 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "0.1.0",
+    "_runner": "terminal",
 
     // Start PowerShell
     "windows": {
-        "command": "${env.windir}\\sysnative\\windowspowershell\\v1.0\\PowerShell.exe"
+        "command": "PowerShell.exe"
     },
     "linux": {
         "command": "/usr/bin/powershell"

@@ -41,13 +41,9 @@ function Expand-MemberExpression {
         Expands the member expression closest to the cursor in the current editor context using the
         VerboseInvokeMethod template.
     #>
+    [PSEditorCommand(DisplayName='Expand Member Expression')]
     [CmdletBinding()]
     param(
-        # Specifies the current editor context.
-        [Parameter(Position=0)]
-        [Microsoft.PowerShell.EditorServices.Extensions.EditorContext]
-        $Context = $psEditor.GetEditorContext(),
-
         # Specifies the member expression ast (or child of) to expand.
         [Parameter(Position=1, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
@@ -82,12 +78,6 @@ function Expand-MemberExpression {
                 throw 'Unable to find a member expression ast near the current cursor location.'
             }
         }
-
-        $scriptFile     = GetScriptFile
-        $line           = $scriptFile.GetLine($memberExpressionAst.Extent.StartLineNumber)
-        $indentOffset   = [regex]::Match($line, '^\s*').Value
-
-
         [Stack[ExtendedMemberExpressionAst]]$expressionAsts = $memberExpressionAst
         if ($memberExpressionAst.Expression -is $targetAstType) {
             for ($nested = $memberExpressionAst.Expression; $nested; $nested = $nested.Expression) {
@@ -161,6 +151,12 @@ function Expand-MemberExpression {
                 $helper.TemplateName = $TemplateName
             }
 
+            if ($psEditor) {
+                $scriptFile     = GetScriptFile
+                $line           = $scriptFile.GetLine($memberExpressionAst.Extent.StartLineNumber)
+                $indentOffset   = [regex]::Match($line, '^\s*').Value
+            }
+
             $expression = $helper.ToString() `
                 -split '\r?\n' `
                 -join ([Environment]::NewLine + $indentOffset) `
@@ -168,8 +164,10 @@ function Expand-MemberExpression {
 
             $expressions.Add($expression)
         }
-
-        Set-ExtentText -Extent $memberExpressionAst.Extent -Value ($expressions -join (,[Environment]::NewLine * 2))
+        if ($psEditor) {
+            Set-ExtentText -Extent $memberExpressionAst.Extent -Value ($expressions -join (,[Environment]::NewLine * 2))
+        } else {
+            $expressions -join (,[Environment]::NewLine * 2)
+        }
     }
 }
-

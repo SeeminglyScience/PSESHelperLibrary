@@ -16,15 +16,9 @@ function Expand-Expression {
         PS C:\> $psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent | Expand-Expression
         Invokes the currently selected text and replaces it with it's output. This is also the default.
     #>
+    [PSEditorCommand()]
     [CmdletBinding()]
     param(
-        # Specifies the current editor context. This parameter is required by PSES to register as
-        # an EditorCommand.
-        [Parameter(Position=0)]
-        [ValidateNotNullOrEmpty()]
-        [Microsoft.PowerShell.EditorServices.Extensions.EditorContext]
-        $Context,
-
         # Specifies the extent to invoke.
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]

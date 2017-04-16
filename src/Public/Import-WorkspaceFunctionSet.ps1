@@ -29,19 +29,19 @@ function Import-WorkspaceFunctionSet {
     [CmdletBinding()]
     param()
     end {
-        $files = $script:PSESData.GetWorkspaceFiles()
+        $files = GetWorkspaceFile
 
         $testManifestSplat = @{
             ErrorAction   = 'Ignore'
             WarningAction = 'SilentlyContinue'
         }
         $files | Where-Object {
-            $PSItem -match '.psd1$' -and
+            $PSItem.FullName -match '.psd1$' -and
             # The match operator is added because ExportedCommands counts as not empty in if statements
             # when empty.
-            (Test-ModuleManifest $PSItem @testManifestSplat).ExportedCommands.Keys -match '.'
+            (Test-ModuleManifest $PSItem.FullName @testManifestSplat).ExportedCommands.Keys -match '.'
 
-        } | ForEach-Object { Import-Module $PSItem -Force }
+        } | ForEach-Object { Import-Module $PSItem.FullName -Force }
 
         # Get the top level sesison state from execution context so we can invoke the function and type
         # definitions in the global scope.

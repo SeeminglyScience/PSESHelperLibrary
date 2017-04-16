@@ -11,14 +11,8 @@ Get a parent ast of a specific ast type.
 
 ## SYNTAX
 
-### Context
 ```
-Get-AncestorAst -Context <EditorContext> -TargetAstType <Type> [<CommonParameters>]
-```
-
-### Ast
-```
-Get-AncestorAst -Ast <Ast> -TargetAstType <Type> [<CommonParameters>]
+Get-AncestorAst [[-Ast] <Ast>] [-TargetAstType] <Type> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -37,33 +31,16 @@ Returns the FunctionDefinitionAst of the function that the cursor is currently i
 
 ## PARAMETERS
 
-### -Context
-Specifies the current editor context.
-The smallest ast closest to the current cursor
-position will be used as a starting point.
-
-```yaml
-Type: EditorContext
-Parameter Sets: Context
-Aliases: 
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Ast
 Specifies the starting ast.
 
 ```yaml
 Type: Ast
-Parameter Sets: Ast
+Parameter Sets: (All)
 Aliases: 
 
-Required: True
-Position: Named
+Required: False
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -78,7 +55,7 @@ Parameter Sets: (All)
 Aliases: 
 
 Required: True
-Position: Named
+Position: 2
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
