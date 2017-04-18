@@ -4,9 +4,24 @@ using namespace System.Management.Automation
 using namespace System.Reflection
 
 function ImportBinderMetadata {
-    [OutputType([System.Management.Automation.CommandInfo], ParameterSetName='PassThru')]
-    [CmdletBinding()]
+    [OutputType([System.Management.Automation.CommandInfo])]
+    [CmdletBinding(PositionalBinding=$false, DefaultParameterSetName='BySessionState')]
     param(
+        # Specifies the session state to process functions from.
+        [Parameter(ParameterSetName='BySessionState')]
+        [ValidateNotNullOrEmpty()]
+        [SessionState]
+        $SessionState = $ExecutionContext.SessionState,
+
+        # Specifies the command info objects to process.
+        [Parameter(Mandatory,
+                   ValueFromPipeline,
+                   ValueFromPipelineByPropertyName,
+                   ParameterSetName='ByCommand')]
+        [ValidateNotNullOrEmpty()]
+        [CommandInfo[]]
+        $Command,
+
         # Specifies the attribute used to target commands for additional metadata.
         [Parameter(Position=0, Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -28,30 +43,36 @@ function ImportBinderMetadata {
         $ImplementingType,
 
         # If specified will return the result CommandInfo to the pipeline.
-        [Parameter(ParameterSetName='PassThru')]
         [switch]
         $PassThru
     )
     end {
-        # Get the function table for the module.
-        $internal = $ExecutionContext.SessionState.GetType().
-            GetProperty('Internal', [BindingFlags]'Instance, NonPublic').
-            GetValue($ExecutionContext.SessionState)
+        if ($PSCmdlet.ParameterSetName -eq 'BySessionState') {
+            # Get the function table for the module.
+            $internal = $SessionState.GetType().
+                GetProperty('Internal', [BindingFlags]'Instance, NonPublic').
+                GetValue($SessionState)
 
-        $functionTable = $internal.GetType().
-            GetMethod('GetFunctionTableAtScope', [BindingFlags]'Instance, NonPublic').
-            Invoke($internal, @('Script'))
+            $functionTable = $internal.GetType().
+                GetMethod('GetFunctionTableAtScope', [BindingFlags]'Instance, NonPublic').
+                Invoke($internal, @('Script'))
 
+            $Command = $functionTable.Values
+        }
 
-        foreach ($command in $functionTable.Values) {
-            $hasAttribute = $command.ScriptBlock.Attributes.TypeId.Foreach{
+        foreach ($aCommand in $Command) {
+            $hasAttribute = $aCommand.ScriptBlock.Attributes.TypeId.Foreach{
                 if ($PSItem) {
                     $Attribute.IsAssignableFrom($PSItem)
                 }
             } -contains $true
 
             if ($hasAttribute) {
-                $function = $command.ScriptBlock.Ast
+                $originalSessionState = $aCommand.ScriptBlock.GetType().
+                    GetProperty('SessionStateInternal', [BindingFlags]'Instance, NonPublic').
+                    GetValue($aCommand.ScriptBlock)
+
+                $function = $aCommand.ScriptBlock.Ast
 
                 $parameters = $function.Body.ParamBlock.Parameters
 
@@ -64,8 +85,11 @@ function ImportBinderMetadata {
                             Where{   $PSItem.Name.VariablePath.UserPath -eq $originalName }.
                             ForEach{ $additionalParameters.Remove($PSItem) }
                 }
-
-                [ReadOnlyCollection[ParameterAst]]$newParameters = $parameters + $additionalParameters
+                if ($parameters) {
+                    [ReadOnlyCollection[ParameterAst]]$newParameters = $parameters + $additionalParameters
+                } else {
+                    [ReadOnlyCollection[ParameterAst]]$newParameters = $additionalParameters
+                }
                 # Parameters are cached in a few places, so we need to set it multiple times.
                 $null = $function.Body.ParamBlock.GetType().
                     GetMethod('set_Parameters', [BindingFlags]'Instance, NonPublic').
@@ -88,15 +112,15 @@ function ImportBinderMetadata {
                 )
                 $null = [scriptblock].
                     GetProperty('SessionStateInternal', [BindingFlags]'Instance, NonPublic').
-                    SetValue($newScriptBlock, $internal)
+                    SetValue($newScriptBlock, $originalSessionState)
                 # Replace FunctionInfo's scriptblock with ours. When the function is exported into
                 # global FunctionInfo will be recreated from the scriptblock.
-                $null = $command.GetType().
+                $null = $aCommand.GetType().
                     GetField('_scriptBlock', [BindingFlags]'Instance, NonPublic').
-                    SetValue($command, $newScriptBlock)
+                    SetValue($aCommand, $newScriptBlock)
 
                 if ($PassThru.IsPresent) {
-                    $command
+                    $aCommand
                 }
             }
         }

@@ -161,8 +161,9 @@ class MemberTemplateHelper {
             $this.member.MemberType
         )
     }
+    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidGlobalVars', '', Justification='Exported variable for customization.')]
     [string] ToString () {
-        return $script:PSESHLTemplates.MemberExpressions.($this.TemplateName) -f $this.GetTemplateArguments()
+        return $global:PSESHLTemplates.MemberExpressions.($this.TemplateName) -f $this.GetTemplateArguments()
     }
     hidden [void] GetTemplateName    () { $this.TemplateName = 'GetValue' }
     hidden [void] GetSource          () { $this.source = '$target.GetType()' }

@@ -1,3 +1,12 @@
+# Define this type here so it's exportable.
+[AttributeUsage([AttributeTargets]::Class)]
+class PSEditorCommand : Attribute {
+    [string] $Name;
+    [string] $DisplayName;
+    [bool] $SuppressOutput;
+    [bool] $SkipRegister;
+}
+
 if ($psEditor) {
 
     $EditorOperations = $psEditor.GetType().
@@ -43,9 +52,9 @@ $PSESHLTemplates = @{
 [System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
 $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1'
 
+. "$PSScriptRoot\Classes\Attributes.ps1"
 . "$PSScriptRoot\Classes\Metadata.ps1"
 . "$PSScriptRoot\Classes\Expressions.ps1"
-. "$PSScriptRoot\Classes\Attributes.ps1"
 
 Get-ChildItem $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' |
     ForEach-Object {
@@ -53,7 +62,7 @@ Get-ChildItem $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' |
     }
 
 if ($psEditor) {
-   ImportEditorCommandMetadata
+   Import-EditorCommand -Module $ExecutionContext.SessionState.Module
 }
 
 # Export only the functions using PowerShell standard verb-noun naming.

@@ -28,6 +28,7 @@ FunctionsToExport = 'Start-SymbolFinderWorkaround',
                     'ConvertFrom-ScriptExtent',
                     'Expand-MemberExpression',
                     'ConvertTo-ScriptExtent',
+                    'Import-EditorCommand',
                     'Expand-Expression',
                     'Get-ScriptExtent',
                     'Get-AncestorAst',
@@ -45,8 +46,7 @@ VariablesToExport = 'PSESHLExcludeFromFileReferences', 'PSESHLTemplates'
 AliasesToExport = @()
 
 # List of all files packaged with this module
-FileList =  'Private\ImportEditorCommandMetadata.ps1',
-            'Public\Start-SymbolFinderWorkaround.ps1',
+FileList =  'Public\Start-SymbolFinderWorkaround.ps1',
             'Public\Import-WorkspaceFunctionSet.ps1',
             'Public\Update-FileReferenceList.ps1',
             'Public\ConvertFrom-ScriptExtent.ps1',

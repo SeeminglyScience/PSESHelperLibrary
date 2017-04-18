@@ -75,7 +75,16 @@ function Expand-MemberExpression {
             $memberExpressionAst = Get-AncestorAst -Ast $Ast -TargetAstType $targetAstType
 
             if ($memberExpressionAst -isnot $targetAstType) {
-                throw 'Unable to find a member expression ast near the current cursor location.'
+
+                $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+                    [InvalidOperationException]::new('Unable to find a member expression ast near the current cursor location.'),
+                    'MemberExpressionNotFound',
+                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
+                    $Ast
+                )
+                if ($psEditor) { $psEditor.Window.ShowErrorMessage($errorRecord) }
+                $PSCmdlet.ThrowTerminatingError($errorRecord)
+
             }
         }
         [Stack[ExtendedMemberExpressionAst]]$expressionAsts = $memberExpressionAst
