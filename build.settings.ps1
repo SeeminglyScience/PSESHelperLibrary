@@ -70,6 +70,11 @@ Properties {
     [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseDeclaredVarsMoreThanAssigments', '')]
     $ScriptAnalyzerSettingsPath = "$PSScriptRoot\ScriptAnalyzerSettings.psd1"
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseDeclaredVarsMoreThanAssigments', '')]
+    $ScriptAnalyzerIgnoreRegex = @(
+        'ModuleTransformation": "Value cannot be null'
+    )
+
     # ------------------- Script signing properties ---------------------------
 
     # Set to $true if you want to sign your scripts. You will need to have a code-signing certificate.

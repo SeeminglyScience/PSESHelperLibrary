@@ -23,7 +23,7 @@ function Set-ExtentText {
     param(
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [System.Management.Automation.Language.IScriptExtent]
-        $Extent = (Get-AstAtCursor).Extent,
+        $Extent = (Find-Ast -AtCursor).Extent,
 
         [Parameter(Mandatory)]
         [AllowEmptyString()]

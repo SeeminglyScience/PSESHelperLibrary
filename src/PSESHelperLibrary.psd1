@@ -31,10 +31,8 @@ FunctionsToExport = 'Start-SymbolFinderWorkaround',
                     'Import-EditorCommand',
                     'Expand-Expression',
                     'Get-ScriptExtent',
-                    'Get-AncestorAst',
-                    'Get-AstAtCursor',
-                    'Set-ExtentText'
-
+                    'Set-ExtentText',
+                    'Find-Ast'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -59,15 +57,13 @@ FileList =  'Public\Start-SymbolFinderWorkaround.ps1',
             'Private\GetWorkspaceFile.ps1',
             'Public\Get-ScriptExtent.ps1',
             'Private\GetInferredType.ps1',
-            'Public\Get-AncestorAst.ps1',
-            'Public\Get-AstAtCursor.ps1',
-            'Public\Set-ExtentText.ps1',
             'Private\GetScriptFile.ps1',
             'Classes\Expressions.ps1',
             'PSESHelperLibrary.psd1',
             'PSESHelperLibrary.psm1',
             'Classes\Attributes.ps1',
             'Classes\Metadata.ps1',
+            'Public\Find-Ast.ps1',
             'Private\GetType.ps1'
 
 

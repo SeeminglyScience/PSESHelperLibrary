@@ -1,3 +1,5 @@
+Import-LocalizedData -BindingVariable Strings -FileName Strings
+
 # Define this type here so it's exportable.
 [AttributeUsage([AttributeTargets]::Class)]
 class PSEditorCommand : Attribute {

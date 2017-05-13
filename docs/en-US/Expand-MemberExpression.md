@@ -21,14 +21,14 @@ context.
 This is mainly to assist with creating expressions to access private members of .NET
 classes through reflection.
 
-The expression is created using string templates. 
+The expression is created using string templates.
 There are templates for several ways of
 accessing members including InvokeMember, GetProperty/GetValue, and a more verbose
-GetMethod/Invoke. 
+GetMethod/Invoke.
 If using the GetMethod/Invoke template it will automatically build type
 expressions for the "types" argument including nonpublic and generic types.
 If a template
-is not specified, this function will attempt to determine the most fitting template. 
+is not specified, this function will attempt to determine the most fitting template.
 If you
 have issues invoking a method with the default, try the VerboseInvokeMethod template.
 
@@ -79,7 +79,7 @@ Aliases:
 
 Required: False
 Position: 2
-Default value: (Get-AstAtCursor)
+Default value: (Find-Ast -AtCursor)
 Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```

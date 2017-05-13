@@ -130,7 +130,21 @@ Task Analyze -depends StageFiles `
 
     "ScriptAnalysisFailBuildOnSeverityLevel set to: $ScriptAnalysisFailBuildOnSeverityLevel"
 
-    $analysisResult = Invoke-ScriptAnalyzer -Path $ModuleOutDir -Settings $ScriptAnalyzerSettingsPath -Recurse -Verbose:$VerbosePreference
+
+    # Added ignore list to workaround an error with custom attributes.
+    $analysisResult = Invoke-ScriptAnalyzer -Path $ModuleOutDir `
+                                            -Settings $ScriptAnalyzerSettingsPath `
+                                            -Verbose:$VerbosePreference `
+                                            -Recurse `
+                                            -ErrorAction SilentlyContinue `
+                                            -ErrorVariable analysisErrors
+    foreach ($analysisError in $analysisErrors) {
+        $shouldIgnore = $ScriptAnalyzerIgnoreRegex.Where{ $analysisError -match $PSItem }
+        if (-not $shouldIgnore) {
+            throw $analysisError
+        }
+    }
+
     $analysisResult | Format-Table
     switch ($ScriptAnalysisFailBuildOnSeverityLevel) {
         'None' {

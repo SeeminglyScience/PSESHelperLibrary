@@ -48,7 +48,7 @@ function Expand-MemberExpression {
         [Parameter(Position=1, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
         [System.Management.Automation.Language.Ast]
-        $Ast = (Get-AstAtCursor),
+        $Ast = (Find-Ast -AtCursor),
 
         # Specifies the name of the template to use for building this expression. Templates are stored
         # in the exported variable $PSESHLTemplates. If a template is not chosen one will be determined
@@ -72,7 +72,7 @@ function Expand-MemberExpression {
 
         if ($memberExpressionAst -isnot $targetAstType) {
 
-            $memberExpressionAst = Get-AncestorAst -Ast $Ast -TargetAstType $targetAstType
+            $memberExpressionAst = $Ast | Find-Ast { $PSItem -is $targetAstType } -Ancestor -First
 
             if ($memberExpressionAst -isnot $targetAstType) {
 

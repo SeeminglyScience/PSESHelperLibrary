@@ -13,12 +13,12 @@ Imports commands with the PSEditorCommand attribute into PowerShell Editor Servi
 
 ### ByModule
 ```
-Import-EditorCommand [-Module] <PSModuleInfo[]> [-Force] [-PassThru]
+Import-EditorCommand [-Module] <PSModuleInfo[]> [-Force] [-PassThru] [<CommonParameters>]
 ```
 
 ### ByCommand
 ```
-Import-EditorCommand [-Command] <CommandInfo[]> [-Force] [-PassThru]
+Import-EditorCommand [-Command] <CommandInfo[]> [-Force] [-PassThru] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -113,16 +113,17 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ### System.Management.Automation.CommandInfo
-
 You can pass commands to register as editor commands.
 
 ## OUTPUTS
 
 ### Microsoft.PowerShell.EditorServices.Extensions.EditorCommand
-
 If the "PassThru" parameter is specified editor commands that were successfully registered
 will be returned.  This function does not output to the pipeline otherwise.
 

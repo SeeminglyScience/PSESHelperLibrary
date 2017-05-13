@@ -44,7 +44,7 @@ Aliases:
 
 Required: False
 Position: 1
-Default value: (Get-AstAtCursor).Extent
+Default value: (Find-Ast -AtCursor).Extent
 Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```

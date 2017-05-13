@@ -49,12 +49,10 @@ will still work (e.g.
 \[System.Management.Automation.SessionStateScope\].SetFunction() will
 still resolve)
 
-### [Get-AncestorAst](Get-AncestorAst.md)
-Uses the "GetAncestorAst" method of System.Management.Automation.Language.Ast to find a parent
-ast of a specific type.
-
-### [Get-AstAtCursor](Get-AstAtCursor.md)
-Get the collective extent of any number of IScriptExtent objects.
+### [Find-Ast](Find-Ast.md)
+The Find-Ast function can be used to easily find a specific ast from a starting ast.  By
+default children asts will be searched, but ancestor asts can also be searched by specifying
+the "Ancestor" switch parameter.
 
 ### [Import-WorkspaceFunctionSet](Import-WorkspaceFunctionSet.md)
 Recursively searches all files in the current workspace for FunctionDefinitionAst's,
