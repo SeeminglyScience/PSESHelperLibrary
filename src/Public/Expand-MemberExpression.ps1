@@ -67,7 +67,7 @@ function Expand-MemberExpression {
             }
         }
 
-        $targetAstType = [System.Management.Automation.Language.MemberExpressionAst]
+        $targetAstType = [MemberExpressionAst]
         $memberExpressionAst = $Ast
 
         if ($memberExpressionAst -isnot $targetAstType) {
@@ -75,16 +75,11 @@ function Expand-MemberExpression {
             $memberExpressionAst = $Ast | Find-Ast { $PSItem -is $targetAstType } -Ancestor -First
 
             if ($memberExpressionAst -isnot $targetAstType) {
-
-                $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-                    [InvalidOperationException]::new('Unable to find a member expression ast near the current cursor location.'),
-                    'MemberExpressionNotFound',
-                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
-                    $Ast
-                )
-                if ($psEditor) { $psEditor.Window.ShowErrorMessage($errorRecord) }
-                $PSCmdlet.ThrowTerminatingError($errorRecord)
-
+                ThrowError -Exception ([InvalidOperationException]::new($Strings.MissingMemberExpressionAst)) `
+                           -Id        MissingMemberExpressionAst `
+                           -Category  InvalidOperation `
+                           -Target    $Ast `
+                           -Show
             }
         }
         [Stack[ExtendedMemberExpressionAst]]$expressionAsts = $memberExpressionAst
@@ -100,14 +95,11 @@ function Expand-MemberExpression {
 
             # Throw if we couldn't find member information at any point.
             if (-not $current.InferredMember) {
-                $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-                    [MissingMemberException]::new($current.Expression, $current.Member.Value),
-                    'MissingMember',
-                    [System.Management.Automation.ErrorCategory]::InvalidResult,
-                    $Ast
-                )
-                if ($psEditor) { $psEditor.Window.ShowErrorMessage($errorRecord) }
-                $PSCmdlet.ThrowTerminatingError($errorRecord)
+                ThrowError -Exception ([MissingMemberException]::new($current.Expression, $current.Member.Value)) `
+                           -Id        MissingMember `
+                           -Category  InvalidResult `
+                           -Target    $Ast `
+                           -Show
             }
 
             switch ($current.Expression) {
@@ -174,7 +166,8 @@ function Expand-MemberExpression {
             $expressions.Add($expression)
         }
         if ($psEditor) {
-            Set-ExtentText -Extent $memberExpressionAst.Extent -Value ($expressions -join (,[Environment]::NewLine * 2))
+            Set-ExtentText -Extent $memberExpressionAst.Extent `
+                           -Value  ($expressions -join (,[Environment]::NewLine * 2))
         } else {
             $expressions -join (,[Environment]::NewLine * 2)
         }

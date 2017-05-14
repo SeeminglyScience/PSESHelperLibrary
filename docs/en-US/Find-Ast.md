@@ -13,12 +13,12 @@ Search for a ast within an ast.
 
 ### FilterScript
 ```
-Find-Ast [-Ast <Ast>] [-FilterScript] <ScriptBlock> [-Ancestor] [-First]
+Find-Ast [-Ast <Ast>] [-FilterScript] <ScriptBlock> [-Ancestor] [-First] [<CommonParameters>]
 ```
 
 ### AtCursor
 ```
-Find-Ast [-AtCursor]
+Find-Ast [-AtCursor] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -132,16 +132,17 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+
 ## INPUTS
 
 ### System.Management.Automation.Language.Ast
-
 You can pass asts to search to this function.
 
 ## OUTPUTS
 
 ### System.Management.Automation.Language.Ast
-
 Asts that match the criteria will be returned to the pipeline.
 
 ## NOTES

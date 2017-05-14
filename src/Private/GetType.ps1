@@ -1,3 +1,5 @@
+using namespace System.Management.Automation
+
 function GetType {
     <#
     .SYNOPSIS
@@ -41,7 +43,12 @@ function GetType {
                 Where{ $PSItem.ToString() -match "$TypeName$" }[0]
         }
         # TODO: Pull using statements from the ast to catch some edge cases.
-        if (-not $type) { throw 'Unable to find type ''{0}''.' -f $TypeName }
+        if (-not $type) {
+            ThrowError -Exception ([RuntimeException]::new($Strings.TypeNotFound -f $TypeName)) `
+                       -Id        TypeNotFound `
+                       -Category  InvalidOperation `
+                       -Target    $TypeName
+        }
         $type
     }
 }

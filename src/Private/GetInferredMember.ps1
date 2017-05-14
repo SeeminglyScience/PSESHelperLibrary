@@ -40,7 +40,7 @@ function GetInferredMember {
         # inferred member info.
         if ($Ast.InferredMember) { return $Ast.InferredMember }
 
-        $type      = GetInferredType -Ast $Ast.Expression
+        $type = GetInferredType -Ast $Ast.Expression
 
         # Predicate to use with FindMembers.
         $predicate = {
@@ -73,13 +73,10 @@ function GetInferredMember {
         if ($member.Count -gt 1) { $member = $member[0] }
 
         if (-not $member) {
-            $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-                [MissingMemberException]::new($Ast.Expression, $Ast.Member.Value),
-                'MissingMember',
-                [System.Management.Automation.ErrorCategory]::InvalidResult,
-                $Ast
-            )
-            $PSCmdlet.ThrowTerminatingError($errorRecord)
+            ThrowError -Exception ([MissingMemberException]::new($Ast.Expression, $Ast.Member.Value)) `
+                       -Id        MissingMember `
+                       -Category  InvalidResult `
+                       -Target    $Ast
         }
 
         $member

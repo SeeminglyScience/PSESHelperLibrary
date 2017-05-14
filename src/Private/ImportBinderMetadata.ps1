@@ -26,7 +26,10 @@ function ImportBinderMetadata {
         [Parameter(Position=0, Mandatory)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript({
-            [System.Attribute].IsAssignableFrom($PSItem)
+            if (-not ([System.Attribute].IsAssignableFrom($PSItem))) {
+                throw $Strings.InvalidAttributeType
+            }
+            $true
         })]
         [type]
         $Attribute,
@@ -36,7 +39,7 @@ function ImportBinderMetadata {
         [ValidateScript({
             $metadata = [System.Management.Automation.ParameterMetadata]::GetParameterMetadata($PSItem)
 
-            if (-not $metadata) { throw 'Specified type must define parameters.' }
+            if (-not $metadata.Count) { throw $Strings.MissingParameterMetadata }
             $true
         })]
         [type]

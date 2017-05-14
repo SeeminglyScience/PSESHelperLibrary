@@ -1,3 +1,5 @@
+using namespace System.Reflection
+
 function ConvertTo-ScriptExtent {
     <#
     .SYNOPSIS

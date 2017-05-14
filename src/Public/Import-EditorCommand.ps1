@@ -96,7 +96,10 @@ function Import-EditorCommand {
             # If we get something back that isn't CommandInfo, then I likely didn't null the output
             # of one of the reflection statements.
             if ($command -isnot [System.Management.Automation.CommandInfo]) {
-                throw 'Internal module error: Received binder result is not a command info object.  Please file an issue on GitHub.'
+                ThrowError -Exception ([InvalidOperationException]::new($Strings.InvalidBinderResult)) `
+                           -Id        InvalidBinderResult `
+                           -Category  InvalidResult `
+                           -Target    $command
             }
             # Get the attribute from our command to get name info.
             $details = $command.ScriptBlock.Attributes.Where{
@@ -106,6 +109,7 @@ function Import-EditorCommand {
             if (-not $details.SkipRegister) {
                 # Name: Expand-Expression becomes ExpandExpression
                 if (-not $details.Name) { $details.Name = $command.Name -replace '-' }
+
                 # DisplayName: Expand-Expression becomes Expand Expression
                 if (-not $details.DisplayName) { $details.DisplayName = $command.Name -replace '-', ' ' }
 
@@ -114,7 +118,7 @@ function Import-EditorCommand {
                     if ($Force.IsPresent) {
                         $null = $psEditor.UnregisterCommand($details.Name)
                     } else {
-                        Write-Verbose ('Editor command "{0}" already exists, skipping.' -f $details.Name)
+                        $PSCmdlet.WriteVerbose($Strings.EditorCommandExists -f $details.Name)
                         continue
                     }
                 }

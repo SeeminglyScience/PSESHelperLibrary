@@ -44,7 +44,7 @@ function GetInferredType {
         if ($Ast -is [System.Management.Automation.Language.TypeExpressionAst]) {
             return GetType -TypeName $Ast.TypeName
         }
-        Write-Verbose 'Checking for type using standard command completion.'
+        $PSCmdlet.WriteVerbose($Strings.InferringFromCompletion)
         $results = [System.Management.Automation.CommandCompletion]::CompleteInput(
             <# ast:            #> $Context.CurrentFile.Ast,
             <# tokens:         #> $Context.CurrentFile.Tokens,
@@ -70,7 +70,7 @@ function GetInferredType {
         }
         # If it's a variable then check for it in scopes relevant to the current workspace.
         if (-not $type -and $Ast -is [System.Management.Automation.Language.VariableExpressionAst]) {
-            Write-Verbose 'Getting imported modules in the workspace.'
+            $PSCmdlet.WriteVerbose($Strings.GettingImportedModules)
 
             $silent = @{
                 ErrorAction   = 'Ignore'
@@ -92,14 +92,14 @@ function GetInferredType {
             # If there are no modules in the workspace then grab the global scope. This isn't needed
             # otherwise because enumerating a module's scopes will hit global as well.
             if (-not $internals) {
-                Write-Verbose 'No modules found, checking default scope instead.'
+                $PSCmdlet.WriteVerbose($Strings.CheckingDefaultScope)
                 $internals = $ExecutionContext.SessionState.GetType().
                     GetProperty('Internal', [BindingFlags]'Instance, NonPublic').
                     GetValue($ExecutionContext.SessionState)
             }
 
             foreach ($internal in $internals) {
-                Write-Verbose 'Enumerating scopes to find a match.'
+                $PSCmdlet.WriteVerbose($Strings.EnumeratingScopesForMember)
                 $searcher = [ref].Assembly.GetType('System.Management.Automation.VariableScopeItemSearcher').
                     InvokeMember(
                         <# name:       #> '',
@@ -121,13 +121,16 @@ function GetInferredType {
 
                 if ($match) {
                     $type = $match.GetType()
-                    Write-Verbose ('Found variable with type ''{0}''.' -f $type)
+                    $PSCmdlet.WriteVerbose($Strings.VariableFound -f $type)
                     break
                 }
             }
         }
         if (-not $type) {
-            throw 'Unable to infer type for expression ''{0}''.' -f $Ast
+            ThrowError -Exception ([InvalidOperationException]::new($Strings.CannotInferType -f $Ast)) `
+                       -Id        CannotInferType `
+                       -Category  InvalidOperation `
+                       -Target    $Ast
         }
         $type
     }

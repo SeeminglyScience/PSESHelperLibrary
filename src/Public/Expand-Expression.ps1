@@ -1,3 +1,6 @@
+using namespace System.Management.Automation
+using namespace System.Management.Automation.Language
+
 function Expand-Expression {
     <#
     .SYNOPSIS
@@ -29,17 +32,31 @@ function Expand-Expression {
     process {
         foreach ($object in $InputObject) {
             if ([string]::IsNullOrWhiteSpace($object.Text)) {
-                throw 'Cannot expand the extent with start offset ''{0}'' for file ''{1}'' because it is empty.' -f $object.StartOffset, $object.File
+                $message = $Strings.ExpandEmptyExtent -f $object.StartOffset, $object.File
+                ThrowError -Exception ([InvalidOperationException]::new($message)) `
+                           -Id        ExpandEmptyExtent `
+                           -Category  InvalidOperation `
+                           -Target    $object `
+                           -Show
             }
             $parseErrors = $null
-            $null = [System.Management.Automation.Language.Parser]::ParseInput(
+            $null = [Parser]::ParseInput(
                 <# input:  #> $object.Text,
                 <# tokens: #> [ref]$null,
                 <# errors: #> [ref]$parseErrors
             )
-            if ($parseErrors) { throw $parseErrors }
-
-            $output = & ([scriptblock]::Create($object.Text)) | Out-String
+            if ($parseErrors) {
+                ThrowError -Exception ([ParseException]::new($parseErrors)) `
+                           -Id        ExpandExpressionParseError `
+                           -Category  InvalidArgument `
+                           -Target    $object `
+                           -Show
+            }
+            try {
+                $output = & ([scriptblock]::Create($object.Text)) | Out-String
+            } catch {
+                ThrowError -ErrorRecord $PSItem -Show
+            }
 
             Set-ExtentText -Extent $object -Value $output
         }

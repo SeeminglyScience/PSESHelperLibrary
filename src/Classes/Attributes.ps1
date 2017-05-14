@@ -6,14 +6,14 @@ class ModuleTransformation : ArgumentTransformationAttribute {
         if ($inputData -is [psmoduleinfo]) {
             if ($engineIntrinsics.SessionState.Module.Name -eq $inputData.Name) {
                 return $inputData
+            } elseif ($result = Get-Module $inputData.Name) {
+                return $result
             }
         }
-
-        $result = Get-Module $inputData.Name
-        if ($result) {
+        if ($result = Get-Module $inputData) {
             return $result
         }
-        throw 'Unable to find module "{0}" in the current session.' -f $inputData
+        throw $script:Strings.CannotFindModule -f $inputData
     }
 }
 class CommandTransformation : ArgumentTransformationAttribute {

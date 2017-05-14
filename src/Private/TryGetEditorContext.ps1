@@ -11,7 +11,7 @@ function TryGetEditorContext {
                 $context = $psEditor.GetEditorContext()
                 Set-Variable -Scope 1 -Name Context -Value $context -ErrorAction Stop
             } catch {
-                Write-Verbose 'Editor context not available, skipping.'
+                $PSCmdlet.WriteVerbose($Strings.SkippingEditorContext)
             }
         }
     }

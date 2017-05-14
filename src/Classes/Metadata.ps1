@@ -11,7 +11,7 @@ class AdditionalCommandParameters {
             $instance = $type::new()
             return $instance.GetParameterAsts()
         } else {
-            throw 'Type must be inherited from the class "AdditionalCommandParameters".'
+            throw $script:Strings.InvalidMetadataType
         }
     }
     [Collection[ParameterAst]] GetParameterAsts () {

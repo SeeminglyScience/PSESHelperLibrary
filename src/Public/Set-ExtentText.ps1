@@ -31,13 +31,17 @@ function Set-ExtentText {
         $Value
     )
     process {
+        TryGetEditorContext
         $bufferRange = ConvertFrom-ScriptExtent -Extent $Extent -BufferRange
-        $currentFile = $psEditor.GetEditorContext().CurrentFile
+        $currentFile = $Context.CurrentFile
 
-        if ($PSCmdlet.ShouldProcess((
-            'Changing ''{0}'' to ''{1}''' -f $currentFile.GetText($bufferRange), $Value
-        ), '', '')) {
-            $psEditor.GetEditorContext().CurrentFile.InsertText($Value, $bufferRange)
+        $shouldProcess = $PSCmdlet.ShouldProcess(
+            ($Strings.WhatIfSetExtent -f $currentFile.GetText($bufferRange), $Value),
+             $Strings.ConfirmTitle,
+            ($Strings.ConfirmSetExtent -f $currentFile.GetText($bufferRange), $Value)
+        )
+        if ($shouldProcess) {
+            $currentFile.InsertText($Value, $bufferRange)
         }
     }
 }

@@ -72,12 +72,9 @@ function Find-Ast {
             AtCursor {
                 # Need editor context to get cursor location.
                 if (-not $Context) {
-                    $PSCmdlet.ThrowTerminatingError([ErrorRecord]::new(
-                        <# exception:     #> [InvalidOperationException]::new($Strings.MissingEditorContext),
-                        <# errorId:       #> 'MissingEditorContext',
-                        <# errorCategory: #> [ErrorCategory]::InvalidOperation,
-                        <# targetObject:  #> $null
-                    ))
+                    ThrowError -Exception ([InvalidOperationException]::new($Strings.MissingEditorContext)) `
+                               -Id        MissingEditorContext `
+                               -Category  InvalidOperation
                 }
 
                 $cursorLine     = $Context.CursorPosition.Line
