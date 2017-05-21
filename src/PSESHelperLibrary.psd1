@@ -21,6 +21,9 @@ Description = 'Helper functions for PowerShell Editor Services.'
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1'
 
+# Modules that must be imported into the global environment prior to importing this module
+RequiredModules = 'PSStringTemplate'
+
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = 'Import-WorkspaceFunctionSet',
                     'Update-FileReferenceList',
@@ -37,7 +40,7 @@ FunctionsToExport = 'Import-WorkspaceFunctionSet',
 CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = 'PSESHLExcludeFromFileReferences', 'PSESHLTemplates'
+VariablesToExport = 'PSESHLExcludeFromFileReferences'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = @()
@@ -50,6 +53,7 @@ FileList =  'Public\Import-WorkspaceFunctionSet.ps1',
             'Public\ConvertTo-ScriptExtent.ps1',
             'Private\ImportBinderMetadata.ps1',
             'Private\TryGetEditorContext.ps1',
+            'Templates\MemberExpression.stg',
             'Private\GetInferredMember.ps1',
             'Public\Expand-Expression.ps1',
             'Private\GetWorkspaceFile.ps1',
@@ -60,6 +64,7 @@ FileList =  'Public\Import-WorkspaceFunctionSet.ps1',
             'PSESHelperLibrary.psd1',
             'PSESHelperLibrary.psm1',
             'Classes\Attributes.ps1',
+            'Classes\Renderers.ps1',
             'Classes\Metadata.ps1',
             'Public\Find-Ast.ps1',
             'Private\GetType.ps1',

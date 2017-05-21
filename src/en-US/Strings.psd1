@@ -21,4 +21,5 @@ InvalidMetadataType=Type must be inherited from the class 'AdditionalCommandPara
 MissingParameterMetadata=Specified type must define parameters.
 CannotFindModule=Unable to find the module '{0}' in the current session.
 InvalidAttributeType=Type must be inherited from the class 'System.Attribute'
+TemplateGroupCompileError=Internal module error: Unable to compile default template group. Please file an issue on GitHub.
 '@

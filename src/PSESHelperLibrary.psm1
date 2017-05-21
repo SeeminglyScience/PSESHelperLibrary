@@ -9,6 +9,17 @@ class PSEditorCommand : Attribute {
     [bool] $SkipRegister;
 }
 
+# PSST doesn't load Antlr until first use, and we need them loaded
+# to create renderers.
+if (-not ('Antlr4.StringTemplate.StringRenderer' -as [type])) {
+    if (-not ($psstPath = (Get-Module PSStringTemplate).ModuleBase)) {
+        # platyPS doesn't seem to be following RequiredModules, this should only ever run
+        # while running platyPS.  Need to look into this more.
+        $psstPath = (Get-Module PSStringTemplate -ListAvailable).ModuleBase
+    }
+    Add-Type -Path $psstPath\Antlr3.Runtime.dll
+    Add-Type -Path $psstPath\Antlr4.StringTemplate.dll
+}
 if ($psEditor) {
 
     $EditorOperations = $psEditor.GetType().
@@ -39,17 +50,6 @@ if ($psEditor) {
     }
 }
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
-$PSESHLTemplates = @{
-    MemberExpressions = ConvertFrom-StringData @'
-    InvokeMember={0}.InvokeMember(\n\t<# name: #> '{3}',\n\t<# invokeAttr: #> [System.Reflection.BindingFlags]'{4}, {1}',\n\t<# binder: #> $null,\n\t<# target: #> {2},\n\t<# args: #> @({5})\n)
-    GetValue={0}.\n\t{4}('{3}', [System.Reflection.BindingFlags]'{1}').\n\tGetValue({2})
-    SetValue={0}.\n\t{4}('{3}', [System.Reflection.BindingFlags]'{1}').\n\tSetValue({2}, {8})
-    ParameterlessInvoke={0}.\n\tGet{9}('{3}', [System.Reflection.BindingFlags]'{1}').\n\tInvoke({2}, @({8}))
-    VerboseInvokeMethod={0}.\n\tGet{9}(\n\t\t<# name: #> '{3}',\n\t\t<# bindingAttr: #> [System.Reflection.BindingFlags]'{1}',\n\t\t<# binder: #> $null,\n\t\t<# types: #> {6},\n\t\t<# modifiers: #> {7}\n\t).Invoke({2}, @({5}))
-'@
-}
-
 # Don't reference any files whose FullName match this regex.
 [System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
 $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1'
@@ -57,11 +57,31 @@ $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugH
 . "$PSScriptRoot\Classes\Attributes.ps1"
 . "$PSScriptRoot\Classes\Metadata.ps1"
 . "$PSScriptRoot\Classes\Expressions.ps1"
+. "$PSScriptRoot\Classes\Renderers.ps1"
 
-Get-ChildItem $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' |
-    ForEach-Object {
-        . $PSItem.FullName
-    }
+# This is a temporary workaround for some issues around stale type resolution in PowerShell classes.
+[System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Script variable used throughout the module.')]
+$ImplementingAssemblies = @{
+    Main        = [PSEditorCommand].Assembly
+    Attributes  = [CommandTransformation].Assembly
+    Metadata    = [AdditionalCommandParameters].Assembly
+    Expressions = [ExtendedMemberExpressionAst].Assembly
+    Renderers   = [StringExpressionRenderer].Assembly
+}
+
+# Idea from: https://becomelotr.wordpress.com/2017/02/13/expensive-dot-sourcing/
+# but mine works with breakpoints :)
+Get-ChildItem $PSScriptRoot\Public, $PSScriptRoot\Private -Filter '*.ps1' | ForEach-Object {
+    $ExecutionContext.InvokeCommand.InvokeScript(
+        <# useLocalScope: #> $false,
+        <# scriptBlock:   #> [System.Management.Automation.Language.Parser]::ParseInput(
+            <# input:     #> [IO.File]::ReadAllText($PSItem.FullName),
+            <# fileName:  #> $PSItem.FullName,
+            <# tokens:    #> [ref]$null,
+            <# errors:    #> [ref]$null).GetScriptBlock(),
+        <# input:         #> $null,
+        <# args:          #> $null)
+}
 
 if ($psEditor) {
    Import-EditorCommand -Module $ExecutionContext.SessionState.Module
@@ -70,4 +90,4 @@ if ($psEditor) {
 # Export only the functions using PowerShell standard verb-noun naming.
 # Be sure to list each exported functions in the FunctionsToExport field of the module manifest file.
 # This improves performance of command discovery in PowerShell.
-Export-ModuleMember -Function *-* -Alias * -Variable PSESHLExcludeFromFileReferences, PSESHLTemplates
+Export-ModuleMember -Function *-* -Alias * -Variable PSESHLExcludeFromFileReferences

@@ -79,7 +79,9 @@ function ImportBinderMetadata {
 
                 $parameters = $function.Body.ParamBlock.Parameters
 
-                $additionalParameters = [AdditionalCommandParameters]::GetParameterAsts($ImplementingType)
+                $additionalParameters = $script:ImplementingAssemblies.Metadata.
+                    GetType('AdditionalCommandParameters')
+                $additionalParameters = $additionalParameters::GetParameterAsts($ImplementingType)
 
                 # Don't override parameters or add duplicates.
                 foreach ($parameter in $parameters) {

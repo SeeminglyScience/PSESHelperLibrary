@@ -12,7 +12,7 @@ Builds an expression for accessing or invoking a member through reflection.
 ## SYNTAX
 
 ```
-Expand-MemberExpression [[-Ast] <Ast>] [-TemplateName <String>] [<CommonParameters>]
+Expand-MemberExpression [[-Ast] <Ast>] [-TemplateName <String>] [-NoParameterNameComments] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -99,6 +99,20 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NoParameterNameComments
+By default expanded methods will have a comment with the parameter name on each line.
+(e.g. <# paramName: #> $paramName,) If you specify this parameter it will be omitted.```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: 
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -110,147 +110,18 @@ class TypeExpressionHelper {
     }
 }
 
-class MemberTemplateHelper {
-    [string] $TemplateName;
-
-    hidden [string] $source;
-    hidden [string] $target;
-    hidden [string] $memberName;
-    hidden [string] $invokeAttribute;
-    hidden [string] $arguments;
-    hidden [string] $types;
-    hidden [string] $argumentCount;
-    hidden [string] $singleArgument;
-    hidden [System.Reflection.MemberInfo] $member;
-    hidden [string] $indent = '    ';
-
-    MemberTemplateHelper ([MemberInfo] $member) {
-        if (-not $member) {
-            throw [ArgumentNullException]::new('member')
-        }
-        $this.member = $member
-        $this.GetTemplateName()
-        $this.Initialize()
-    }
-    hidden [void] Initialize () {
-        if ($this.member.IsStatic -or $this.member.MemberType -eq 'Constructor') {
-            $this.source = [TypeExpressionHelper]::Create($this.member.ReflectedType)
-            $this.target  = '$null'
-        } else {
-            $this.source = '$targetHere.GetType()'
-            $this.target = '$targetHere'
-        }
-        $this.GetMemberName()
-        $this.GetInvokeAttribute()
-        $this.GetArguments()
-        $this.GetTypes()
-        $this.GetArgumentCount()
-        $this.GetSingleArgument()
-    }
-    [object[]] GetTemplateArguments () {
-        return @(
-            $this.source
-            $this.GetBindingFlags()
-            $this.target
-            $this.memberName
-            $this.invokeAttribute
-            $this.arguments
-            $this.types
-            $this.argumentCount
-            $this.singleArgument
-            $this.member.MemberType
-        )
-    }
-    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidGlobalVars', '', Justification='Exported variable for customization.')]
-    [string] ToString () {
-        return $global:PSESHLTemplates.MemberExpressions.($this.TemplateName) -f $this.GetTemplateArguments()
-    }
-    hidden [void] GetTemplateName    () { $this.TemplateName = 'GetValue' }
-    hidden [void] GetSource          () { $this.source = '$target.GetType()' }
-    hidden [void] GetMemberName      () { $this.memberName = $this.member.Name }
-    hidden [void] GetInvokeAttribute () { $this.invokeAttribute = 'Get{0}' -f $this.member.MemberType }
-    hidden [void] GetArguments       () { $this.arguments = '' }
-    hidden [void] GetTypes           () { $this.types = '@()' }
-    hidden [void] GetArgumentCount   () { $this.argumentCount = '0' }
-    hidden [void] GetSingleArgument  () { $this.singleArgument = '$null' }
-    hidden [string] GetBindingFlags  () {
-        return $this.member.GetType().
-            GetProperty('BindingFlags', [BindingFlags]'Instance, NonPublic').
-            GetValue($this.member).
-            ToString()
-    }
-
-    static        [MemberTemplateHelper] Create ([MemberInfo] $member) { return [MemberTemplateHelper]::new($member) }
-    hidden static [MemberTemplateHelper] Create ([MethodInfo] $member) { return [MethodTemplateHelper]::new($member) }
-    hidden static [MemberTemplateHelper] Create ([ConstructorInfo] $member) { return [ConstructorTemplateHelper]::new($member) }
-}
-
-class MethodTemplateHelper : MemberTemplateHelper {
-    hidden [object[]] $memberArguments;
-
-    MethodTemplateHelper ([MethodBase] $member) : base ($member) {}
-
-    hidden [void] GetInvokeAttribute () { $this.invokeAttribute = 'InvokeMethod' }
-
-    hidden [void] GetSingleArgument () { $this.singleArgument = $null }
-
-    hidden [void] GetArguments () {
-        $this.memberArguments = $this.member.GetParameters()
-        $builder = [System.Text.StringBuilder]::new()
-
-        if ($this.memberArguments) {
-            foreach ($argument in $this.memberArguments) {
-                $builder.
-                    AppendLine().
-                    Append($this.indent * 2).
-                    AppendFormat('<# {0}: #> ${0},', $argument.Name)
-            }
-            $builder.Remove($builder.Length-1, 1).AppendLine().Append($this.indent)
-        }
-        $this.arguments = $builder.ToString()
-    }
-
-    hidden [void] GetTypes () {
-        if ($this.memberArguments) {
-            $builder = [System.Text.StringBuilder]::new('(')
-            foreach ($argument in $this.memberArguments) {
-                $builder.
-                    Append([TypeExpressionHelper]::Create($argument.ParameterType)).
-                    Append(', ')
-            }
-            $this.types = $builder.
-                Remove($builder.Length-2, 1).
-                Append('-as [type[]])').ToString()
-        } else {
-            $this.types = '@()'
-        }
-    }
-
-    hidden [void] GetNames          () { $this.names = "@('" + $this.memberArguments.Name -join "', '" + "')" }
-    hidden [void] GetArgumentCount  () { $this.argumentCount = $this.member.GetParameters().Count }
-    hidden [void] GetTemplateName   () { $this.TemplateName  = 'InvokeMember' }
-}
-
-class ConstructorTemplateHelper : MethodTemplateHelper {
-
-    ConstructorTemplateHelper ([ConstructorInfo] $member) : base ($member) {}
-
-    hidden [void] GetInvokeAttribute () { $this.invokeAttribute = 'CreateInstance' }
-    hidden [void] GetMemberName      () { $this.memberName = '' }
-}
 class ExtendedMemberExpressionAst : MemberExpressionAst {
     [type] $InferredType;
-    [bool] $IsPublic;
-    [bool] $IsOverload;
     [MemberInfo] $InferredMember;
     [BindingFlags] $BindingFlags;
     [ReadOnlyCollection[ExpressionAst]] $Arguments;
 
     ExtendedMemberExpressionAst ([IScriptExtent] $extent,
-              [ExpressionAst] $expression,
-              [CommandElementAst] $member,
-              [bool] $static,
-              [ReadOnlyCollection[ExpressionAst]] $arguments) : base($extent, $expression, $member, $static) {
+                                 [ExpressionAst] $expression,
+                                 [CommandElementAst] $member,
+                                 [bool] $static,
+                                 [ReadOnlyCollection[ExpressionAst]] $arguments) :
+                                 base($extent, $expression, $member, $static) {
 
         try {
             $this.Arguments      = $arguments
@@ -258,20 +129,11 @@ class ExtendedMemberExpressionAst : MemberExpressionAst {
             $this.InferredType   = ($this.InferredMember.ReturnType,
                                     $this.InferredMember.PropertyType,
                                     $this.InferredMember.FieldType).
-                                    ForEach{ if ($PSItem) { $PSItem }}[0]
+                                    Where({ $PSItem }, 'First')[0]
 
             $this.BindingFlags   = $this.InferredMember.GetType().
                 GetProperty('BindingFlags', [BindingFlags]'Instance, NonPublic').
                 GetValue($this.InferredMember)
-
-            $this.IsPublic       = $this.BindingFlags.HasFlag([BindingFlags]::Public)
-
-            try {
-                $this.InferredMember.ReflectedType.GetMember($this.InferredMember.Name, $this.BindingFlags)
-                $this.IsOverload = $false
-            } catch [AmbiguousMatchException] {
-                $this.IsOverload = $true
-            }
         } catch {
             $this.InferredType = [object]
         }

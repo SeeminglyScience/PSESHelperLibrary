@@ -71,9 +71,11 @@ Properties {
     $ScriptAnalyzerSettingsPath = "$PSScriptRoot\ScriptAnalyzerSettings.psd1"
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseDeclaredVarsMoreThanAssigments', '')]
-    $ScriptAnalyzerIgnoreRegex = @(
-        'ModuleTransformation": "Value cannot be null'
-    )
+    $ScriptAnalyzerIgnorePredicate = {
+        ($PSItem.Exception    -is [System.Management.Automation.ParseException] -and
+         $PSItem.TargetObject -eq 'TypeNotFound') -or
+         $PSItem.Exception.Message.Contains('The following exception occurred while constructing the attribute "ModuleTransformation"')
+    }
 
     # ------------------- Script signing properties ---------------------------
 

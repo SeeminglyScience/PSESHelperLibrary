@@ -138,12 +138,8 @@ Task Analyze -depends StageFiles `
                                             -Recurse `
                                             -ErrorAction SilentlyContinue `
                                             -ErrorVariable analysisErrors
-    foreach ($analysisError in $analysisErrors) {
-        $shouldIgnore = $ScriptAnalyzerIgnoreRegex.Where{ $analysisError -match $PSItem }
-        if (-not $shouldIgnore) {
-            throw $analysisError
-        }
-    }
+    # Throw analysis errors that don't match the predicate.
+    $analysisErrors.Where($ScriptAnalyzerIgnorePredicate, 'Split')[1].ForEach{ throw $PSItem }
 
     $analysisResult | Format-Table
     switch ($ScriptAnalysisFailBuildOnSeverityLevel) {

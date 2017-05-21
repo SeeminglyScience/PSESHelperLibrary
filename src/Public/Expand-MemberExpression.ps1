@@ -1,5 +1,7 @@
 using namespace System.Collections.Generic
 using namespace System.Management.Automation.Language
+using namespace System.Reflection
+using namespace Antlr4.StringTemplate.Compiler
 
 function Expand-MemberExpression {
     <#
@@ -8,14 +10,15 @@ function Expand-MemberExpression {
     .DESCRIPTION
         Creates an expression for the closest MemberExpressionAst to the cursor in the current editor
         context. This is mainly to assist with creating expressions to access private members of .NET
-        classes through reflection.
+        classes through reflection, but can also be used to generate parameter name comments for public
+        methods.
 
         The expression is created using string templates.  There are templates for several ways of
         accessing members including InvokeMember, GetProperty/GetValue, and a more verbose
         GetMethod/Invoke.  If using the GetMethod/Invoke template it will automatically build type
         expressions for the "types" argument including nonpublic and generic types. If a template
         is not specified, this function will attempt to determine the most fitting template.  If you
-        have issues invoking a method with the default, try the VerboseInvokeMethod template.
+        have issues invoking a method with the default, try the VerboseGetMethod template.
 
         This function currently works on member expressions attached to the following:
 
@@ -29,17 +32,26 @@ function Expand-MemberExpression {
            the chain. Additionally chains may break if a member returns a type that is too generic
            like System.Object or a vague interface.
     .INPUTS
-        None
+        System.Management.Automation.Language.Ast
+
+        You can past MemberExpressionAsts or asts close to member expressions to this function.
     .OUTPUTS
-        None
+        System.String
+
+        This function will return the fully expanded expression as a string if used outside of
+        PowerShell Editor Services.  Otherwise this function does not return output.
     .EXAMPLE
         PS C:\> Expand-MemberExpression
         Expands the member expression closest to the cursor in the current editor context using an
         automatically determined template.
     .EXAMPLE
-        PS C:\> Expand-MemberExpression -Template VerboseInvokeMethod
+        PS C:\> Expand-MemberExpression -Template VerboseGetMethod
         Expands the member expression closest to the cursor in the current editor context using the
         VerboseInvokeMethod template.
+    .EXAMPLE
+        PS C:\> Find-Ast -First { $_.Member -and -not $_.Parent.Member } | Expand-MemberExpression
+        Gets the ast of the last member of the first member expression in the current file and then
+        expands it.
     #>
     [PSEditorCommand(DisplayName='Expand Member Expression')]
     [CmdletBinding()]
@@ -50,31 +62,44 @@ function Expand-MemberExpression {
         [System.Management.Automation.Language.Ast]
         $Ast = (Find-Ast -AtCursor),
 
-        # Specifies the name of the template to use for building this expression. Templates are stored
-        # in the exported variable $PSESHLTemplates. If a template is not chosen one will be determined
-        # based on member type at runtime.
-        [ArgumentCompleter({ $PSESHLTemplates.MemberExpressions.Keys -like ($args[2] + '*') })]
-        [ValidateScript({ $PSItem -in $PSESHLTemplates.MemberExpressions.Keys })]
+        # A template is automatically chosen based on member type and visibility.  You can use
+        # this parameter to force the use of a specific template.
+        [ValidateSet('GetMethod', 'InvokeMember', 'VerboseGetMethod', 'GetValue', 'SetValue')]
         [string]
-        $TemplateName
-    )
-    process {
-        function toCamelCase ([Parameter(ValueFromPipeline=$true)][string]$String) {
-            process {
-                if ($String) {
-                    $String -replace '^\w', $String.SubString(0,1).ToLower()
-                }
-            }
-        }
+        $TemplateName,
 
-        $targetAstType = [MemberExpressionAst]
+        # By default expanded methods will have a comment with the parameter name on each line.
+        # (e.g. <# paramName: #> $paramName,) If you specify this parameter it will be omitted.
+        [switch]
+        $NoParameterNameComments
+    )
+    begin {
+        try {
+            $groupSource = Get-Content -Raw $PSScriptRoot\..\Templates\MemberExpression.stg
+            $group = New-StringTemplateGroup -Definition $groupSource -ErrorAction Stop
+
+            $instance = $group.GetType().
+                GetProperty('Instance', [BindingFlags]'Instance, NonPublic').
+                GetValue($group)
+
+            $renderer = [MemberExpressionRenderer]::new()
+            $instance.RegisterRenderer([string], $renderer)
+            $instance.RegisterRenderer([type], [TypeRenderer]::new())
+        } catch {
+            ThrowError -Exception ([TemplateException]::new($Strings.TemplateGroupCompileError, $null)) `
+                       -Id        TemplateGroupCompileError `
+                       -Category  InvalidData `
+                       -Target    $PSItem
+        }
+}
+    process {
         $memberExpressionAst = $Ast
 
-        if ($memberExpressionAst -isnot $targetAstType) {
+        if ($memberExpressionAst -isnot [MemberExpressionAst]) {
 
-            $memberExpressionAst = $Ast | Find-Ast { $PSItem -is $targetAstType } -Ancestor -First
+            $memberExpressionAst = $Ast | Find-Ast { $PSItem -is [MemberExpressionAst] } -Ancestor -First
 
-            if ($memberExpressionAst -isnot $targetAstType) {
+            if ($memberExpressionAst -isnot [MemberExpressionAst]) {
                 ThrowError -Exception ([InvalidOperationException]::new($Strings.MissingMemberExpressionAst)) `
                            -Id        MissingMemberExpressionAst `
                            -Category  InvalidOperation `
@@ -83,18 +108,18 @@ function Expand-MemberExpression {
             }
         }
         [Stack[ExtendedMemberExpressionAst]]$expressionAsts = $memberExpressionAst
-        if ($memberExpressionAst.Expression -is $targetAstType) {
+        if ($memberExpressionAst.Expression -is [MemberExpressionAst]) {
             for ($nested = $memberExpressionAst.Expression; $nested; $nested = $nested.Expression) {
-                try {
+                if ($nested -is [MemberExpressionAst]) {
                     $expressionAsts.Push($nested)
-                } catch { break }
+                } else { break }
             }
         }
         [List[string]]$expressions = @()
         while ($expressionAsts.Count -and ($current = $expressionAsts.Pop())) {
 
             # Throw if we couldn't find member information at any point.
-            if (-not $current.InferredMember) {
+            if (-not ($current.InferredMember)) {
                 ThrowError -Exception ([MissingMemberException]::new($current.Expression, $current.Member.Value)) `
                            -Id        MissingMember `
                            -Category  InvalidResult `
@@ -104,52 +129,30 @@ function Expand-MemberExpression {
 
             switch ($current.Expression) {
                 { $PSItem -is [MemberExpressionAst] } {
-                    $variable = $PSItem.InferredMember.Name -replace
-                        '^\.ctor$', $PSItem.InferredMember.ReflectedType.Name |
-                        toCamelCase
+                    $variable = $renderer.TransformMemberName($PSItem.InferredMember.Name)
                 }
                 { $PSItem -is [VariableExpressionAst] } {
                     $variable = $PSItem.VariablePath.UserPath
                 }
                 { $PSItem -is [TypeExpressionAst] } {
-                    $source = [TypeExpressionHelper]::Create($current.InferredMember.ReflectedType)
-                    $target = '$null'
+                    $source = $current.InferredMember.ReflectedType
                 }
             }
             if ($variable) {
-                $target = '${0}' -f $variable
+                $source = '${0}' -f $variable
 
                 # We don't want to build out reflection expressions for public members so we chain
                 # them together in one of the expressions.
-                while ($current.IsPublic -and $expressionAsts.Count) {
-                    $target += '.{0}' -f $current.InferredMember.Name
+                while (($current.InferredMember.IsPublic            -or
+                        $current.InferredMember.GetMethod.IsPublic) -and
+                        $expressionAsts.Count) {
+                    $source += '.{0}' -f $current.InferredMember.Name
 
                     if ($current.InferredMember.MemberType -eq 'Method') {
-                        $target += '({0})' -f $current.Arguments.Extent.Text
+                        $source += '({0})' -f $current.Arguments.Extent.Text
                     }
                     $current = $expressionAsts.Pop()
                 }
-                $source = '{0}.GetType()' -f $target
-            }
-            # Add the assignment, mainly to facilitate recursive member expression expansion.
-            $source = '${0} = {1}' -f ($current.InferredMember.Name -replace
-                '^\.ctor$', $current.InferredMember.ReflectedType.Name |
-                toCamelCase), $source
-
-            $helper = [MemberTemplateHelper]::Create($current.InferredMember)
-            $helper.source = $source
-            $helper.target = $target
-
-            $shouldUseParameterless = -not $current.IsOverload      -and
-                                      -not $TemplateName            -and
-                                      -not $helper.memberArguments  -and
-                                      $current.InferredMember.MemberType -in 'Constructor', 'Method'
-            if ($shouldUseParameterless) {
-                $helper.TemplateName = 'ParameterlessInvoke'
-            }
-            # Only use the specified template if this is the top level expression.
-            if (-not $expressionAsts.Count -and $TemplateName) {
-                $helper.TemplateName = $TemplateName
             }
 
             if ($psEditor) {
@@ -158,18 +161,39 @@ function Expand-MemberExpression {
                 $indentOffset   = [regex]::Match($line, '^\s*').Value
             }
 
-            $expression = $helper.ToString() `
-                -split '\r?\n' `
-                -join ([Environment]::NewLine + $indentOffset) `
-                -replace '\t', '    '
+            $templateParameters = @{
+                ast                  = $current
+                source               = $source
+                includeParamComments = -not $NoParameterNameComments
+            }
+            $member = $current.InferredMember
 
+            # Automatically use the more explicit VerboseGetMethod template if building a reflection
+            # statement for a method with multiple overloads with the same parameter count.
+            $needsVerbose = $member -is [MethodInfo] -and -not
+                            $member.IsPublic -and
+                            $member.ReflectedType.GetMethods(60).Where{
+                                $PSItem.Name -eq $current.InferredMember.Name -and
+                                $PSItem.GetParameters().Count -eq $member.GetParameters().Count }.
+                                Count -gt 1
+
+            if ($TemplateName -and -not $expressionAsts.Count) {
+                $templateParameters.template = $TemplateName
+            } elseif ($needsVerbose) {
+                $templateParameters.template = 'VerboseGetMethod'
+            }
+            $expression = Invoke-StringTemplate -Group $group -Name Main -Parameters $templateParameters
             $expressions.Add($expression)
         }
+
+        $result = $expressions -join (,[Environment]::NewLine * 2) `
+                               -split '\r?\n' `
+                               -join ([Environment]::NewLine + $indentOffset)
         if ($psEditor) {
             Set-ExtentText -Extent $memberExpressionAst.Extent `
-                           -Value  ($expressions -join (,[Environment]::NewLine * 2))
+                           -Value  $result
         } else {
-            $expressions -join (,[Environment]::NewLine * 2)
+            $result
         }
     }
 }

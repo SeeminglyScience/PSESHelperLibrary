@@ -70,11 +70,15 @@ function Import-EditorCommand {
         $editorCommands = $extensionService.GetType().
             GetField('editorCommands', [BindingFlags]'Instance, NonPublic').
             GetValue($extensionService)
+
+        $assemblies              = $script:ImplementingAssemblies
+        $psEditorCommand         = $assemblies.Main.GetType('PSEditorCommand')
+        $editorCommandParameters = $assemblies.Metadata.GetType('EditorCommandParameters')
     }
     process {
         $importMetadataSplat = @{
-            Attribute        = ([PSEditorCommand])
-            ImplementingType = ([EditorCommandParameters])
+            Attribute        = $psEditorCommand
+            ImplementingType = $editorCommandParameters
             PassThru         = $true
         }
         if ($PSCmdlet.ParameterSetName -eq 'ByModule') {
@@ -102,9 +106,9 @@ function Import-EditorCommand {
                            -Target    $command
             }
             # Get the attribute from our command to get name info.
-            $details = $command.ScriptBlock.Attributes.Where{
-                $PSItem -is [PSEditorCommand]
-            }[0]
+            $details = $command.ScriptBlock.Attributes.Where({
+                'PSEditorCommand' -eq $PSItem.TypeId
+            }, 'First')[0]
 
             if (-not $details.SkipRegister) {
                 # Name: Expand-Expression becomes ExpandExpression
