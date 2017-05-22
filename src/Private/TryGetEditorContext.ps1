@@ -1,6 +1,7 @@
 # Temporary workaround for populating the Context parameter until I can get default values working
 # with the PSEditorCommand attribute.
 function TryGetEditorContext {
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
     [CmdletBinding()]
     param()
     end {

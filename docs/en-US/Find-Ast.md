@@ -11,9 +11,10 @@ Search for a ast within an ast.
 
 ## SYNTAX
 
-### FilterScript
+### FilterScript (Default)
 ```
-Find-Ast [-Ast <Ast>] [-FilterScript] <ScriptBlock> [-Ancestor] [-First] [<CommonParameters>]
+Find-Ast [[-FilterScript] <ScriptBlock>] [-Ast <Ast>] [-Before] [-Family] [-First] [-Last] [-Ancestor]
+ [-IncludeStartingAst] [<CommonParameters>]
 ```
 
 ### AtCursor
@@ -51,6 +52,23 @@ Returns all nested member expressions in the file currently open in the editor.
 
 ## PARAMETERS
 
+### -FilterScript
+Specifies a ScriptBlock that returns a boolean.
+Uses $PSItem and $_ like
+like Where-Object.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: FilterScript
+Aliases: 
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Ast
 Specifies the ast to search in.
 
@@ -66,27 +84,22 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -FilterScript
-Specifies a ScriptBlock that returns a boolean.
-Uses $PSItem and $_ like
-like Where-Object.
-
-```yaml
-Type: ScriptBlock
+### -Before
+If specified the direction of the search will be reversed.```yaml
+Type: SwitchParameter
 Parameter Sets: FilterScript
 Aliases: 
 
-Required: True
-Position: 1
-Default value: None
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Ancestor
-Specifies to search ancestors asts instead of children.
-
-```yaml
+### -Family
+If specified only children of the starting ast will be searched. If specified with the
+"Before" parameter then only ancestors will be searched.```yaml
 Type: SwitchParameter
 Parameter Sets: FilterScript
 Aliases: 
@@ -106,7 +119,49 @@ ast that matches.
 ```yaml
 Type: SwitchParameter
 Parameter Sets: FilterScript
-Aliases: Closest
+Aliases: Closest, F
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Last
+If specified will return only the last result. This will be the furthest
+ast that matches.```yaml
+Type: SwitchParameter
+Parameter Sets: FilterScript
+Aliases: Furthest
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Ancestor
+Specifies to search ancestors asts instead of children.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: FilterScript
+Aliases: Parent
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeStartingAst
+If specified the starting ast will be included if matched.```yaml
+Type: SwitchParameter
+Parameter Sets: FilterScript
+Aliases: 
 
 Required: False
 Position: Named
