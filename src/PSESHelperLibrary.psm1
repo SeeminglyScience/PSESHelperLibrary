@@ -58,6 +58,7 @@ $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugH
 . "$PSScriptRoot\Classes\Metadata.ps1"
 . "$PSScriptRoot\Classes\Expressions.ps1"
 . "$PSScriptRoot\Classes\Renderers.ps1"
+. "$PSScriptRoot\Classes\Position.ps1"
 
 # This is a temporary workaround for some issues around stale type resolution in PowerShell classes.
 [System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Script variable used throughout the module.')]

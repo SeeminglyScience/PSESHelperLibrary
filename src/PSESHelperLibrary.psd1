@@ -25,15 +25,13 @@ PowerShellVersion = '5.1'
 RequiredModules = 'PSStringTemplate'
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Import-WorkspaceFunctionSet',
-                    'Update-FileReferenceList',
-                    'ConvertFrom-ScriptExtent',
+FunctionsToExport = 'ConvertFrom-ScriptExtent',
                     'Expand-MemberExpression',
                     'ConvertTo-ScriptExtent',
                     'Import-EditorCommand',
                     'Expand-Expression',
                     'Get-ScriptExtent',
-                    'Set-ExtentText',
+                    'Set-ScriptExtent',
                     'Find-Ast'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -46,30 +44,33 @@ VariablesToExport = 'PSESHLExcludeFromFileReferences'
 AliasesToExport = @()
 
 # List of all files packaged with this module
-FileList =  'Public\Import-WorkspaceFunctionSet.ps1',
-            'Public\Update-FileReferenceList.ps1',
-            'Public\ConvertFrom-ScriptExtent.ps1',
-            'Public\Expand-MemberExpression.ps1',
-            'Public\ConvertTo-ScriptExtent.ps1',
-            'Private\ImportBinderMetadata.ps1',
-            'Private\TryGetEditorContext.ps1',
-            'Templates\MemberExpression.stg',
-            'Private\GetInferredMember.ps1',
-            'Public\Expand-Expression.ps1',
-            'Private\GetWorkspaceFile.ps1',
-            'Public\Get-ScriptExtent.ps1',
-            'Private\GetInferredType.ps1',
-            'Private\GetScriptFile.ps1',
-            'Classes\Expressions.ps1',
-            'PSESHelperLibrary.psd1',
-            'PSESHelperLibrary.psm1',
-            'Classes\Attributes.ps1',
-            'Classes\Renderers.ps1',
-            'Classes\Metadata.ps1',
-            'Public\Find-Ast.ps1',
-            'Private\GetType.ps1',
-            'en-US\Strings.psd1'
-
+FileList = 'Public\ConvertFrom-ScriptExtent.ps1',
+           'Public\Expand-MemberExpression.ps1',
+           'Public\ConvertTo-ScriptExtent.ps1',
+           'Private\ImportBinderMetadata.ps1',
+           'en-US\PSESHelperLibrary-help.xml',
+           'Public\Import-EditorCommand.ps1',
+           'Private\TryGetEditorContext.ps1',
+           'Templates\MemberExpression.stg',
+           'Private\GetInferredMember.ps1',
+           'Private\GetWorkspaceFile.ps1',
+           'Public\Expand-Expression.ps1',
+           'Private\GetInferredType.ps1',
+           'Public\Get-ScriptExtent.ps1',
+           'Public\Set-ScriptExtent.ps1',
+           'Private\GetScriptFile.ps1',
+           'Classes\Expressions.ps1',
+           'PSESHelperLibrary.psd1',
+           'Classes\Attributes.ps1',
+           'Private\ThrowError.ps1',
+           'PSESHelperLibrary.psm1',
+           'Classes\Renderers.ps1',
+           'PSESHelperLibrary.cat',
+           'Classes\Position.ps1',
+           'Classes\Metadata.ps1',
+           'Public\Find-Ast.ps1',
+           'Private\GetType.ps1',
+           'en-US\Strings.psd1'
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{

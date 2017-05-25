@@ -96,36 +96,51 @@ function ConvertTo-ScriptExtent {
         [Microsoft.PowerShell.EditorServices.BufferPosition]
         $EndBuffer
     )
-    begin { $flags = [BindingFlags]'NonPublic, Instance' }
+    begin {
+        $flags = [BindingFlags]'NonPublic, Instance'
+        TryGetEditorContext
+    }
     process {
         if ($InputObject -is [System.Management.Automation.Language.IScriptExtent]) { return $InputObject }
 
-        if ($StartBuffer) {
-            $StartLineNumber   = $StartBuffer.Line
-            $StartColumnNumber = $StartBuffer.Column
-            $EndLineNumber     = $EndBuffer.Line
-            $EndColumnNumber   = $EndBuffer.Column
-        }
+        if ($StartOffsetNumber) {
+            $startOffset = $StartOffsetNumber
+            $endOffset   = $EndOffsetNumber
 
-        # We use the FileContext from GetEditorContext here as well, but we'd have to create a BufferRange
-        # to get line text.
-        if (-not $FilePath) { $FilePath = $psEditor.GetEditorContext().CurrentFile.Ast.Extent.File }
-        $scriptFile  = GetScriptFile -Path $FilePath
-        $startOffset = $scriptFile.GetOffsetAtPosition($StartLineNumber, $StartColumnNumber)
-        $endOffset   = $startOffset
+            if (-not $EndOffsetNumber) {
+                $endOffset = $startOffset
+            }
+            $scriptFile = GetScriptFile
+        } else {
+            if ($StartBuffer) {
+                $StartLineNumber   = $StartBuffer.Line
+                $StartColumnNumber = $StartBuffer.Column
+                $EndLineNumber     = $EndBuffer.Line
+                $EndColumnNumber   = $EndBuffer.Column
+            }
 
-        $endIsSame = $EndLineNumber   -eq $StartLineNumber -and
-                     $EndColumnNumber -eq $StartColumnNumber
+            # We use the FileContext from GetEditorContext here as well, but we'd have to create a BufferRange
+            # to get line text.
+            if (-not $FilePath) {
+                $FilePath = $psEditor.GetEditorContext().CurrentFile.Ast.Extent.File
+            }
+            $scriptFile  = GetScriptFile -Path $FilePath
+            $startOffset = $scriptFile.GetOffsetAtPosition($StartLineNumber, $StartColumnNumber)
+            $endOffset   = $startOffset
 
-        if (($EndLineNumber -and $EndColumnNumber) -and -not $endIsSame) {
-            $endOffset = $scriptFile.GetOffsetAtPosition($EndLineNumber, $EndColumnNumber)
+            $endIsSame = $EndLineNumber   -eq $StartLineNumber -and
+                        $EndColumnNumber -eq $StartColumnNumber
+
+            if (($EndLineNumber -and $EndColumnNumber) -and -not $endIsSame) {
+                $endOffset = $scriptFile.GetOffsetAtPosition($EndLineNumber, $EndColumnNumber)
+            }
         }
 
         $positionHelper = $scriptFile.ScriptAst.Extent.GetType().
             GetProperty('PositionHelper', $flags).
             GetValue($scriptFile.ScriptAst.Extent)
 
-        [psobject].Assembly.GetType('System.Management.Automation.Language.InternalScriptExtent').
+        [ref].Assembly.GetType('System.Management.Automation.Language.InternalScriptExtent').
             GetConstructor(
                 <# bindingAttr:     #> $flags,
                 <# binder:          #> $null,

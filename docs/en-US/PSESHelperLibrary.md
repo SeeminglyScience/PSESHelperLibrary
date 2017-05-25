@@ -69,7 +69,7 @@ However, care should be taken before adding to your profile.
 This is *very likely* to cause
 issues with debugging.
 
-### [Set-ExtentText](Set-ExtentText.md)
+### [Set-ScriptExtent](Set-ScriptExtent.md)
 Uses the PowerShell EditorServices API to replace text an extent.
 ScriptExtent objects can
 be found as a property on any object inherited from System.Management.Automation.Language.Ast.

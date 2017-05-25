@@ -58,7 +58,7 @@ function Expand-Expression {
                 ThrowError -ErrorRecord $PSItem -Show
             }
 
-            Set-ExtentText -Extent $object -Value $output
+            Set-ScriptExtent -Extent $object -Text $output
         }
     }
 }

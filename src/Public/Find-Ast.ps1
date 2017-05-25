@@ -38,7 +38,7 @@ function Find-Ast {
         PS C:\> Find-Ast { $_.InvocationOperator -eq 'Dot' } | Find-Ast -Family { $_.VariablePath }
         Returns all variable expressions used in a dot source expression.
     .EXAMPLE
-        PS C:\> Find-Ast { 'PowerShellVersion' -eq $_ } | Find-Ast -First | Set-ExtentText -Value "'4.0'"
+        PS C:\> Find-Ast { 'PowerShellVersion' -eq $_ } | Find-Ast -First | Set-ScriptExtent -Text "'4.0'"
         First finds the ast of the PowerShellVersion manifest tag, then finds the first ast after it
         and changes the text to '4.0'. This will not work as is if the field is commented.
     #>

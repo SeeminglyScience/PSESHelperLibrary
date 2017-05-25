@@ -12,7 +12,7 @@ Replaces text at a specified IScriptExtent object.
 ## SYNTAX
 
 ```
-Set-ExtentText [[-Extent] <IScriptExtent>] [-Value] <String> [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-ExtentText [[-Extent] <IScriptExtent>] [-Value] <String> [-WhatIf] [-Confirm]
 ```
 
 ## DESCRIPTION
@@ -95,12 +95,10 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
-
 ## INPUTS
 
 ### System.Management.Automation.Language.IScriptExtent
+
 You can pass script extent objects to this function.  You can also pass objects with a property
 named "Extent".
 

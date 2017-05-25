@@ -190,8 +190,8 @@ function Expand-MemberExpression {
                                -split '\r?\n' `
                                -join ([Environment]::NewLine + $indentOffset)
         if ($psEditor) {
-            Set-ExtentText -Extent $memberExpressionAst.Extent `
-                           -Value  $result
+            Set-ScriptExtent -Extent $memberExpressionAst.Extent `
+                             -Text  $result
         } else {
             $result
         }
