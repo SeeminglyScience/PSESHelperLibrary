@@ -70,16 +70,12 @@ function Import-EditorCommand {
         $editorCommands = $extensionService.GetType().
             GetField('editorCommands', [BindingFlags]'Instance, NonPublic').
             GetValue($extensionService)
-
-        $assemblies              = $script:ImplementingAssemblies
-        $psEditorCommand         = $assemblies.Main.GetType('PSEditorCommand')
-        $editorCommandParameters = $assemblies.Metadata.GetType('EditorCommandParameters')
     }
     process {
         $importMetadataSplat = @{
-            Attribute        = $psEditorCommand
-            ImplementingType = $editorCommandParameters
-            PassThru         = $true
+            Attribute    = $script:ImplementingAssemblies.Main.GetType('PSEditorCommand')
+            ParameterAst = NewContextParameterAst
+            PassThru     = $true
         }
         if ($PSCmdlet.ParameterSetName -eq 'ByModule') {
             # If called from a module during it's initialization we can't rely on ExportedFunctions.

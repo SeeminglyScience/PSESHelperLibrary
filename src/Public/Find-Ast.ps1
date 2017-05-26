@@ -136,21 +136,22 @@ function Find-Ast {
         if ($Ancestor.IsPresent) {
             $Family = $Before = $true
         }
-        TryGetEditorContext
-        if (-not $Ast -and $Context) {
-            $Ast = $Context.CurrentFile.Ast
+        if ($psEditor) { $context = $psEditor.GetEditorContext() }
+
+        if (-not $Ast -and $context) {
+            $Ast = $context.CurrentFile.Ast
         }
         switch ($PSCmdlet.ParameterSetName) {
             AtCursor {
                 # Need editor context to get cursor location.
-                if (-not $Context) {
+                if (-not $context) {
                     ThrowError -Exception ([InvalidOperationException]::new($Strings.MissingEditorContext)) `
                                -Id        MissingEditorContext `
                                -Category  InvalidOperation
                 }
 
-                $cursorLine     = $Context.CursorPosition.Line
-                $cursorColumn   = $Context.CursorPosition.Column
+                $cursorLine     = $context.CursorPosition.Line
+                $cursorColumn   = $context.CursorPosition.Column
                 $cursorOffset   = [regex]::Match(
                     $ast.Extent.Text,
                     "(.*\r?\n){$($cursorLine-1)}.{$($cursorColumn-1)}"

@@ -55,7 +55,6 @@ if ($psEditor) {
 $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1'
 
 . "$PSScriptRoot\Classes\Attributes.ps1"
-. "$PSScriptRoot\Classes\Metadata.ps1"
 . "$PSScriptRoot\Classes\Expressions.ps1"
 . "$PSScriptRoot\Classes\Renderers.ps1"
 . "$PSScriptRoot\Classes\Position.ps1"
@@ -65,7 +64,6 @@ $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugH
 $ImplementingAssemblies = @{
     Main        = [PSEditorCommand].Assembly
     Attributes  = [CommandTransformation].Assembly
-    Metadata    = [AdditionalCommandParameters].Assembly
     Expressions = [ExtendedMemberExpressionAst].Assembly
     Renderers   = [StringExpressionRenderer].Assembly
 }

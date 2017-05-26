@@ -62,8 +62,7 @@ function Set-ScriptExtent {
         $extentList.Add($Extent)
     }
     end {
-        TryGetEditorContext
-
+        if ($psEditor) { $context = $psEditor.GetEditorContext() }
 
         switch ($PSCmdlet.ParameterSetName) {
             # Insert text as a single string expression.
@@ -97,12 +96,12 @@ function Set-ScriptExtent {
                                 -join ([Environment]::NewLine + $indentOffset)
             }
             # This inserts text to replace the extent and updates all other extents in the queue.
-            $aExtent.SetValue($Context.CurrentFile, $aText)
+            $aExtent.SetValue($context.CurrentFile, $aText)
         }
 
         # Need a new factory after every run because the logic currently can't handle
         # a single change that spans multiple segments.  So if, for example, the user
         # ran this function for multiple extents and then hit undo, we couldn't keep track.
-        $null = [ElasticHelper]::instances.Remove($Context.CurrentFile.Path)
+        $null = [ElasticHelper]::instances.Remove($context.CurrentFile.Path)
     }
 }

@@ -98,7 +98,7 @@ function ConvertTo-ScriptExtent {
     )
     begin {
         $flags = [BindingFlags]'NonPublic, Instance'
-        TryGetEditorContext
+        if ($psEditor) { $context = $psEditor.GetEditorContext() }
     }
     process {
         if ($InputObject -is [System.Management.Automation.Language.IScriptExtent]) { return $InputObject }
@@ -122,7 +122,7 @@ function ConvertTo-ScriptExtent {
             # We use the FileContext from GetEditorContext here as well, but we'd have to create a BufferRange
             # to get line text.
             if (-not $FilePath) {
-                $FilePath = $psEditor.GetEditorContext().CurrentFile.Ast.Extent.File
+                $FilePath = $context.CurrentFile.Path
             }
             $scriptFile  = GetScriptFile -Path $FilePath
             $startOffset = $scriptFile.GetOffsetAtPosition($StartLineNumber, $StartColumnNumber)
