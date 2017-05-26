@@ -11,6 +11,11 @@ Replaces text at a specified IScriptExtent object.
 
 ## SYNTAX
 
+### __AllParameterSets (Default)
+```
+Set-ScriptExtent [-Text] <PSObject> [-Extent <ElasticExtent>] [<CommonParameters>]
+```
+
 ### AsString
 ```
 Set-ScriptExtent [-Text] <PSObject> [-AsString] [-Extent <ElasticExtent>] [<CommonParameters>]

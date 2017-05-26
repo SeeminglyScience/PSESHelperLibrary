@@ -11,11 +11,11 @@ Properties {
         WarningAction    = 'SilentlyContinue'
         Namespace        = 'Microsoft.PowerShell.EditorServices'
     }
-    'BufferRange', 'BufferPosition' | ForEach-Object {
+    'BufferRange', 'BufferPosition', 'ScriptFile' | ForEach-Object {
         Add-Type -Name $PSItem @mockSplat
     }
     $mockSplat.Namespace = 'Microsoft.PowerShell.EditorServices.Extensions'
-    'EditorCommand', 'EditorContext' | ForEach-Object {
+    'EditorCommand', 'EditorContext', 'FileContext' | ForEach-Object {
         Add-Type -Name $PSItem @mockSplat
     }
     # The root directories for the module's docs, src and test.
