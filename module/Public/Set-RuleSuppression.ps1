@@ -3,38 +3,11 @@ using namespace Microsoft.PowerShell.EditorServices
 
 function Set-RuleSuppression {
     <#
-    .SYNOPSIS
-        Adds a SuppressMessage attribute to suppress a rule violation.
-    .DESCRIPTION
-        The Set-RuleSupression function generates a SuppressMessage attribute and inserts it into a
-        script file. The PSScriptAnalyzer rule will be determined automatically, as well as the best
-        place to insert the Attribute.
-
-        The default behavior is to attempt to suppress the Ast closest to the current cursor position,
-        but you can also specify Asts to suppress.
-    .INPUTS
-        System.Management.Automation.Language.Ast
-
-        You can pass Asts with violations to this function.
-    .OUTPUTS
-        None
-    .EXAMPLE
-        PS C:\> Set-RuleSuppression
-        Adds a SuppressMessage attribute to suppress a rule violation.
-    .EXAMPLE
-        PS C:\> $propBlock = Find-Ast { $_.CommandElements -and $_.GetCommandName() -eq 'Properties' }
-        PS C:\> $propBlock | Find-Ast { $_.VariablePath } | Set-RuleSuppression
-        Finds all variable expressions in a psake Properties block and creates a rule suppression for
-        any that have a violation.
-    .NOTES
-        This function does not use existing syntax markers from PowerShell Editor Services, and
-        instead runs the Invoke-ScriptAnalyzer cmdlet on demand. This may create duplicate suppression
-        attributes.
+    .EXTERNALHELP PSESHelperLibrary-help.xml
     #>
     [PSEditorCommand(DisplayName='Suppress PSSA Rule Violation')]
-    [CmdletBinding()]
+    [CmdletBinding(HelpUri='https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/docs/en-US/Set-RuleSuppression.md')]
     param(
-        # Specifies the Ast with a rule violation to suppress.
         [Parameter(Position=0, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [System.Management.Automation.Language.Ast[]]

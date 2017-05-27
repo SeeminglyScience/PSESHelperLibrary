@@ -32,21 +32,15 @@ if ($psEditor) {
         GetValue($EditorOperations)
 
 } else {
+    $typesToMock = 'Microsoft.PowerShell.EditorServices.BufferRange',
+                   'Microsoft.PowerShell.EditorServices.BufferPosition',
+                   'Microsoft.PowerShell.EditorServices.ScriptFile',
+                   'Microsoft.PowerShell.EditorServices.Extensions.FileContext',
+                   'Microsoft.PowerShell.EditorServices.Extensions.EditorCommand',
+                   'Microsoft.PowerShell.EditorServices.Extensions.EditorContext'
 
-    # This is to avoid parsing errors when loaded outside of the integrated console. Primarily to
-    # enable build tasks from VSCode's task runner.
-    $mockSplat = @{
-        MemberDefinition = 'private object mock;'
-        IgnoreWarnings   = $true
-        WarningAction    = 'SilentlyContinue'
-        Namespace        = 'Microsoft.PowerShell.EditorServices'
-    }
-    'BufferRange', 'BufferPosition' | ForEach-Object {
-        Add-Type -Name $PSItem @mockSplat
-    }
-    $mockSplat.Namespace = 'Microsoft.PowerShell.EditorServices.Extensions'
-    'EditorCommand', 'EditorContext' | ForEach-Object {
-        Add-Type -Name $PSItem @mockSplat
+    foreach ($typeName in ($typesToMock)) {
+        [ref].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add($typeName, [int])
     }
 }
 

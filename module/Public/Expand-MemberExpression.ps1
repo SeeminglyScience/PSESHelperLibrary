@@ -5,71 +5,20 @@ using namespace Antlr4.StringTemplate.Compiler
 
 function Expand-MemberExpression {
     <#
-    .SYNOPSIS
-        Builds an expression for accessing or invoking a member through reflection.
-    .DESCRIPTION
-        Creates an expression for the closest MemberExpressionAst to the cursor in the current editor
-        context. This is mainly to assist with creating expressions to access private members of .NET
-        classes through reflection, but can also be used to generate parameter name comments for public
-        methods.
-
-        The expression is created using string templates.  There are templates for several ways of
-        accessing members including InvokeMember, GetProperty/GetValue, and a more verbose
-        GetMethod/Invoke.  If using the GetMethod/Invoke template it will automatically build type
-        expressions for the "types" argument including nonpublic and generic types. If a template
-        is not specified, this function will attempt to determine the most fitting template.  If you
-        have issues invoking a method with the default, try the VerboseGetMethod template.
-
-        This function currently works on member expressions attached to the following:
-
-        1. Type literal expressions (including invalid expressions with non public types)
-
-        2. Variable expressions where the variable exists within a currently existing scope.
-
-        3. Any other scenario where standard completion works.
-
-        4. Any number of nested member expressions where one of the above is true at some point in
-           the chain. Additionally chains may break if a member returns a type that is too generic
-           like System.Object or a vague interface.
-    .INPUTS
-        System.Management.Automation.Language.Ast
-
-        You can past MemberExpressionAsts or asts close to member expressions to this function.
-    .OUTPUTS
-        System.String
-
-        This function will return the fully expanded expression as a string if used outside of
-        PowerShell Editor Services.  Otherwise this function does not return output.
-    .EXAMPLE
-        PS C:\> Expand-MemberExpression
-        Expands the member expression closest to the cursor in the current editor context using an
-        automatically determined template.
-    .EXAMPLE
-        PS C:\> Expand-MemberExpression -Template VerboseGetMethod
-        Expands the member expression closest to the cursor in the current editor context using the
-        VerboseInvokeMethod template.
-    .EXAMPLE
-        PS C:\> Find-Ast -First { $_.Member -and -not $_.Parent.Member } | Expand-MemberExpression
-        Gets the ast of the last member of the first member expression in the current file and then
-        expands it.
+    .EXTERNALHELP PSESHelperLibrary-help.xml
     #>
     [PSEditorCommand(DisplayName='Expand Member Expression')]
-    [CmdletBinding()]
+    [CmdletBinding(HelpUri='https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/docs/en-US/Expand-MemberExpression.md')]
     param(
-        # Specifies the member expression ast (or child of) to expand.
         [Parameter(Position=1, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
         [System.Management.Automation.Language.Ast]
         $Ast = (Find-Ast -AtCursor),
 
-        # A template is automatically chosen based on member type and visibility.  You can use
-        # this parameter to force the use of a specific template.
         [ValidateSet('GetMethod', 'InvokeMember', 'VerboseGetMethod', 'GetValue', 'SetValue')]
         [string]
         $TemplateName,
 
-        # By default expanded methods will have a comment with the parameter name on each line.
-        # (e.g. <# paramName: #> $paramName,) If you specify this parameter it will be omitted.
         [switch]
         $NoParameterNameComments
     )

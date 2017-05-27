@@ -7,91 +7,49 @@ Locale: en-US
 ---
 
 # PSESHelperLibrary Module
+
 ## Description
-{{Manually Enter Description Here}}
+
+Module to facilitate easy manipulation of script files and editor features.
 
 ## PSESHelperLibrary Cmdlets
+
 ### [ConvertFrom-ScriptExtent](ConvertFrom-ScriptExtent.md)
-Translates IScriptExtent object properties into constructors for some common PowerShell
-EditorServices types.
+
+Translates IScriptExtent object properties into constructors for some common PowerShell EditorServices types.
 
 ### [ConvertTo-ScriptExtent](ConvertTo-ScriptExtent.md)
+
 Converts position and range objects from PowerShellEditorServices to ScriptExtent objects.
 
 ### [Expand-Expression](Expand-Expression.md)
-Creates and invokes a scriptblock from the text at the specified extent.
-The output is
-then converted to a string object using the "Out-String" cmdlet and used to set the text at
-the extent.
+
+The Expand-Expression function replaces text at a specified range with it's output in PowerShell. As an editor command it will expand output of selected text.
 
 ### [Expand-MemberExpression](Expand-MemberExpression.md)
-Creates an expression for the closest MemberExpressionAst to the cursor in the current editor
-context.
-This is mainly to assist with creating expressions to access private members of .NET
-classes through reflection.
 
-The expression is created using string templates.
-There are templates for several ways of
-accessing members including InvokeMember, GetProperty/GetValue, and a more verbose
-GetMethod/Invoke.
-If using the GetMethod/Invoke template it will automatically build type
-expressions for the "types" argument including nonpublic and generic types.
-If a template
-is not specified, this function will attempt to determine the most fitting template.
-If you
-have issues invoking a method with the default, try the VerboseInvokeMethod template.
-
-Currently this only works with expressions on type literals (i.e.
-\[string\]) and will not work
-with variables.
-Even if a type cannot typically be resolved with a type literal, this function
-will still work (e.g.
-\[System.Management.Automation.SessionStateScope\].SetFunction() will
-still resolve)
+The Expand-MemberExpression function creates an expression for the closest MemberExpressionAst to the cursor in the current editor context. This is mainly to assist with creating expressions to access private members of .NET classes through reflection.
 
 ### [Find-Ast](Find-Ast.md)
+
 The Find-Ast function can be used to easily find a specific ast from a starting ast.  By
 default children asts will be searched, but ancestor asts can also be searched by specifying
 the "Ancestor" switch parameter.
 
-### [Import-WorkspaceFunctionSet](Import-WorkspaceFunctionSet.md)
-Recursively searches all files in the current workspace for FunctionDefinitionAst's,
-TypeDefinitionAst's, and psd1 files (with exported commands) and loads them into the top
-level session state.
+### [Import-EditorCommand](Import-EditorCommand.md)
 
-The variable $PSESHLExcludeFromFileReferences can be used to exclude files.
+The Import-EditorCommand function will search the specified module for functions tagged as editor commands and register them with PowerShell Editor Services. By default, if a module is specified only exported functions will be processed. However, if this function is called from a module, and the module is specified in the "Module" parameter, the function table for the module's script scope will be processed.
 
-This is mainly intended to be a temporary workaround for cross module intellisense until
-PowerShellEditorServices has better symbol tracking for larger projects.
+Alternatively, you can specify command info objects (like those from the Get-Command cmdlet) to be processed directly.
 
-This will not be loaded automatically unless placed in the $profile used by the editor.
-However, care should be taken before adding to your profile.
-This is *very likely* to cause
-issues with debugging.
+### [Set-RuleSupression](Set-RuleSupression.md)
+
+The Set-RuleSupression function generates a SuppressMessage attribute and inserts it into a script file. The PSScriptAnalyzer rule will be determined automatically, as well as the best place to insert the Attribute.
+
+As an editor command it will attempt to suppress the Ast closest to the current cursor position.
 
 ### [Set-ScriptExtent](Set-ScriptExtent.md)
-Uses the PowerShell EditorServices API to replace text an extent.
-ScriptExtent objects can
-be found as a property on any object inherited from System.Management.Automation.Language.Ast.
 
-### [Start-SymbolFinderWorkaround](Start-SymbolFinderWorkaround.md)
-Define a class that replaces the DidOpenTextDocumentNotification event handler in the
-PowerShellEditorServices language server.
-The replacement method will update the file
-ReferencedFiles field to include all files in the current workspace and call the original
-method.
+The Set-ScriptExtent function can insert or replace text at a specified position in a file open in PowerShell Editor Services.
 
-This is mainly intended to be a temporary workaround for cross module intellisense until
-PowerShellEditorServices has better symbol tracking for larger projects.
-
-This will not be loaded automatically unless placed in the $profile used by the editor.
-However, care should be taken before adding to your profile.
-This is likely to cause issues
-with debugging.
-
-### [Update-FileReferenceList](Update-FileReferenceList.md)
-This function is mainly intended to be ran automatically by the Start-SymbolFinderWorkaround
-function.
-It can however be ran manually for temporary workspace wide symbol support as an
-alternative for those who do not want to override EditorServices private methods.
-
+You can use the Find-Ast function to easily find the desired extent.

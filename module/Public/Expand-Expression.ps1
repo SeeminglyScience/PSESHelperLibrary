@@ -3,26 +3,11 @@ using namespace System.Management.Automation.Language
 
 function Expand-Expression {
     <#
-    .SYNOPSIS
-        Replaces an extent with the return value of it's text as an expression.
-    .DESCRIPTION
-        Creates and invokes a scriptblock from the text at the specified extent.  The output is
-        then converted to a string object using the "Out-String" cmdlet and used to set the text at
-        the extent.
-    .INPUTS
-        System.Management.Automation.Language.IScriptExtent
-
-        You can pass extents to invoke from the pipeline.
-    .OUTPUTS
-        None
-    .EXAMPLE
-        PS C:\> $psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent | Expand-Expression
-        Invokes the currently selected text and replaces it with it's output. This is also the default.
+    .EXTERNALHELP PSESHelperLibrary-help.xml
     #>
     [PSEditorCommand()]
-    [CmdletBinding()]
+    [CmdletBinding(HelpUri='https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/docs/en-US/Expand-Expression.md')]
     param(
-        # Specifies the extent to invoke.
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
         [Alias('Extent')]

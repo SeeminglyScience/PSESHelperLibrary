@@ -3,100 +3,49 @@ using namespace System.Collections.Generic
 
 function Find-Ast {
     <#
-    .SYNOPSIS
-        Search for a ast within an ast.
-    .DESCRIPTION
-        The Find-Ast function can be used to easily find a specific ast from a starting ast. All
-        asts following the inital starting ast will be searched, including those that are not part
-        of the same tree.
-
-        The behavior of the search (such as direction) and criteria can be changed with the parameters.
-
-        Alternatively, you can specify the AtCursor parameter to only return the ast closest to the
-        cursor in PowerShell Editor Services.
-    .INPUTS
-        System.Management.Automation.Language.Ast
-
-        You can pass asts to search to this function.
-    .OUTPUTS
-        System.Management.Automation.Language.Ast
-
-        Asts that match the criteria will be returned to the pipeline.
-    .EXAMPLE
-        PS C:\> Find-Ast
-        Returns all asts in the currently open file in the editor.
-    .EXAMPLE
-        PS C:\> Find-Ast -First -IncludeStartingAst
-        Returns the top level ast in the currently open file in the editor.
-    .EXAMPLE
-        PS C:\> Find-Ast { $PSItem -is [FunctionDefinitionAst] }
-        Returns all function definition asts in the ast of file currently open in the editor.
-    .EXAMPLE
-        PS C:\> Find-Ast { $_.Member }
-        Returns all member expressions in the file currently open in the editor.
-    .EXAMPLE
-        PS C:\> Find-Ast { $_.InvocationOperator -eq 'Dot' } | Find-Ast -Family { $_.VariablePath }
-        Returns all variable expressions used in a dot source expression.
-    .EXAMPLE
-        PS C:\> Find-Ast { 'PowerShellVersion' -eq $_ } | Find-Ast -First | Set-ScriptExtent -Text "'4.0'"
-        First finds the ast of the PowerShellVersion manifest tag, then finds the first ast after it
-        and changes the text to '4.0'. This will not work as is if the field is commented.
+    .EXTERNALHELP PSESHelperLibrary-help.xml
     #>
-    [CmdletBinding(PositionalBinding=$false, DefaultParameterSetName='FilterScript')]
+    [CmdletBinding(PositionalBinding=$false,
+                   DefaultParameterSetName='FilterScript',
+                   HelpUri='https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/docs/en-US/Find-Ast.md')]
     param(
-        # Specifies a ScriptBlock that returns $true if an ast should be returned. Uses $PSItem and
-        # $_ like Where-Object. If not specified all asts will be returned.
         [Parameter(Position=0, ParameterSetName='FilterScript')]
         [ValidateNotNullOrEmpty()]
         [scriptblock]
         $FilterScript = { $true },
 
-        # Specifies the starting ast. The default is the ast of the current file in PowerShell
-        # Editor Services.
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName='FilterScript')]
         [ValidateNotNullOrEmpty()]
         [System.Management.Automation.Language.Ast]
         $Ast,
 
-        # If specified the direction of the search will be reversed.
         [Parameter(ParameterSetName='FilterScript')]
         [switch]
         $Before,
 
-        # If specified only children of the starting ast will be searched. If specified with the
-        # "Before" parameter then only ancestors will be searched.
         [Parameter(ParameterSetName='FilterScript')]
         [switch]
         $Family,
 
-        # If specified will return only the first result. This will be the closest
-        # ast that matches.
         [Parameter(ParameterSetName='FilterScript')]
         [Alias('Closest', 'F')]
         [switch]
         $First,
 
-        # If specified will return only the last result. This will be the furthest
-        # ast that matches.
         [Parameter(ParameterSetName='FilterScript')]
         [Alias('Furthest')]
         [switch]
         $Last,
 
-        # If specified will only search ancestors of the starting ast.  This is a convenience
-        # parameter that acts the same as the "Family" and "Before" parameters when used together.
         [Parameter(ParameterSetName='FilterScript')]
         [Alias('Parent')]
         [switch]
         $Ancestor,
 
-        # If specified the starting ast will be included if matched.
         [Parameter(ParameterSetName='FilterScript')]
         [switch]
         $IncludeStartingAst,
 
-        # If specified, this function will return the smallest ast that the cursor is
-        # within. Requires PowerShell Editor Services.
         [Parameter(ParameterSetName='AtCursor')]
         [switch]
         $AtCursor

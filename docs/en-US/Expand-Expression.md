@@ -1,30 +1,30 @@
 ---
 external help file: PSESHelperLibrary-help.xml
-online version: 
+online version:
 schema: 2.0.0
 ---
 
 # Expand-Expression
 
 ## SYNOPSIS
+
 Replaces an extent with the return value of it's text as an expression.
 
 ## SYNTAX
 
-```
+```powershell
 Expand-Expression [[-InputObject] <IScriptExtent[]>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Creates and invokes a scriptblock from the text at the specified extent. 
-The output is
-then converted to a string object using the "Out-String" cmdlet and used to set the text at
-the extent.
+
+The Expand-Expression function replaces text at a specified range with it's output in PowerShell. As an editor command it will expand output of selected text.
 
 ## EXAMPLES
 
 ### -------------------------- EXAMPLE 1 --------------------------
-```
+
+```powershell
 $psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent | Expand-Expression
 ```
 
@@ -34,6 +34,7 @@ This is also the default.
 ## PARAMETERS
 
 ### -InputObject
+
 Specifies the extent to invoke.
 
 ```yaml
@@ -49,11 +50,13 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
+
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Management.Automation.Language.IScriptExtent
+
 You can pass extents to invoke from the pipeline.
 
 ## OUTPUTS

@@ -16,7 +16,7 @@ Author = 'Patrick Meinecke'
 Copyright = '(c) 2017 Patrick Meinecke. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Helper functions for PowerShell Editor Services.'
+Description = 'Module to facilitate easy manipulation of script files and editor features.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1'

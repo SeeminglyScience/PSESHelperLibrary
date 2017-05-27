@@ -1,36 +1,10 @@
 function Import-EditorCommand {
     <#
-    .SYNOPSIS
-        Imports commands with the PSEditorCommand attribute into PowerShell Editor Services.
-    .DESCRIPTION
-        This function will search the specified module for functions tagged as editor commands and
-        register them with PowerShell Editor Services.  By default, if a module is specified only
-        exported functions will be processed. However, if this function is called from a module, and
-        the module is specified in the "Module" parameter, the function table for the module's script
-        scope will be processed.
-
-        Alternatively, you can specify command info objects (like those from the Get-Command cmdlet)
-        to be processed directly.
-    .INPUTS
-        System.Management.Automation.CommandInfo
-
-        You can pass commands to register as editor commands.
-    .OUTPUTS
-        Microsoft.PowerShell.EditorServices.Extensions.EditorCommand
-
-        If the "PassThru" parameter is specified editor commands that were successfully registered
-        will be returned.  This function does not output to the pipeline otherwise.
-    .EXAMPLE
-        PS C:\> Import-EditorCommand -Module PSESHelperLibrary
-        Registers all editor commands in the module PSESHelperLibrary.
-    .EXAMPLE
-        PS C:\> Get-Command *Editor* | Import-EditorCommand -PassThru
-        Registers all editor commands that contain "Editor" in the name and return all successful imports.
+    .EXTERNALHELP PSESHelperLibrary-help.xml
     #>
     [OutputType([Microsoft.PowerShell.EditorServices.Extensions.EditorCommand])]
-    [CmdletBinding()]
+    [CmdletBinding(HelpUri='https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/docs/en-US/Import-EditorCommand.md')]
     param(
-        # Specifies the module to search for exportable editor commands.
         [Parameter(Position=0,
                    Mandatory,
                    ValueFromPipeline,
@@ -42,8 +16,6 @@ function Import-EditorCommand {
         [System.Management.Automation.PSModuleInfo[]]
         $Module,
 
-        # Specifies the functions to register as editor commands. If the function does not have the
-        # PSEditorCommand attribute it will be ignored.
         [Parameter(Position=0,
                    Mandatory,
                    ValueFromPipeline,
@@ -55,11 +27,9 @@ function Import-EditorCommand {
         [System.Management.Automation.CommandInfo[]]
         $Command,
 
-        # If specified will replace existing editor commands.
         [switch]
         $Force,
 
-        # If specified will return an EditorCommand object for each imported command.
         [switch]
         $PassThru
     )

@@ -4,53 +4,25 @@ using namespace System.Management.Automation.Language
 
 function Set-ScriptExtent {
     <#
-    .SYNOPSIS
-        Replaces text at a specified ScriptExtent object.
-    .DESCRIPTION
-        The Set-ScriptExtent function can insert or replace text at a specified position in a file
-        open in PowerShell Editor Services.
-
-        You can use the Find-Ast function to easily find the desired extent.
-    .INPUTS
-        System.Management.Automation.Language.IScriptExtent
-
-        You can pass script extent objects to this function.  You can also pass objects with a property
-        named "Extent".
-    .OUTPUTS
-        None
-    .EXAMPLE
-        PS C:\> Find-Ast { 'gci' -eq $_ } | Set-ScriptExtent -Text 'Get-ChildItem'
-        Replaces all instances of 'gci' with 'Get-ChildItem'
-    .EXAMPLE
-        PS C:\> $manifestAst = Find-Ast { 'FunctionsToExport' -eq $_ } | Find-Ast -First
-        PS C:\> $manifestAst | Set-ScriptExtent -Text (gci .\src\Public).BaseName -AsArray
-        Replaces the current value of FunctionsToExport in a module manifest with a list of files
-        in the Public folder as a string array literal expression.
-    .EXAMPLE
-        PS C:\> ConvertTo-ScriptExtent -StartOffset 100 -EndOffset 110 | Set-ScriptExtent -Text ''
-        Removes existing text between offsets 100 and 110 in the current file.
+    .EXTERNALHELP PSESHelperLibrary-help.xml
     #>
-    [CmdletBinding(PositionalBinding=$false, DefaultParameterSetName='__AllParameterSets')]
+    [CmdletBinding(PositionalBinding=$false,
+                   DefaultParameterSetName='__AllParameterSets',
+                   HelpUri='https://github.com/SeeminglyScience/PSESHelperLibrary/blob/master/docs/en-US/.md')]
     param(
-        # Specifies the text to insert in place of the extent.  Any object can be specified, but will
-        # be converted to a string before being passed to PowerShell Editor Services.
         [Parameter(Position=0, Mandatory)]
         [Alias('Value')]
         [psobject]
         $Text,
 
-        # Specifies to insert as a single quoted string expression.
         [Parameter(Mandatory, ParameterSetName='AsString')]
         [switch]
         $AsString,
 
-        # Specifies to insert as a single quoted string list.  The list is separated by comma and
-        # new line, and will be adjusted to a hanging indent.
         [Parameter(Mandatory, ParameterSetName='AsArray')]
         [switch]
         $AsArray,
 
-        # Specifies the extent to replace within the editor.
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ElasticExtent]
         $Extent = (Find-Ast -AtCursor).Extent

@@ -1,53 +1,67 @@
 ---
 external help file: PSESHelperLibrary-help.xml
-online version: 
+online version:
 schema: 2.0.0
 ---
 
 # Set-ScriptExtent
 
 ## SYNOPSIS
+
 Replaces text at a specified IScriptExtent object.
 
 ## SYNTAX
 
 ### __AllParameterSets (Default)
-```
+
+```powershell
 Set-ScriptExtent [-Text] <PSObject> [-Extent <ElasticExtent>] [<CommonParameters>]
 ```
 
 ### AsString
-```
+
+```powershell
 Set-ScriptExtent [-Text] <PSObject> [-AsString] [-Extent <ElasticExtent>] [<CommonParameters>]
 ```
 
 ### AsArray
-```
+
+```powershell
 Set-ScriptExtent [-Text] <PSObject> [-AsArray] [-Extent <ElasticExtent>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Uses the PowerShell EditorServices API to replace text an extent.
-ScriptExtent objects can
-be found as a property on any object inherited from System.Management.Automation.Language.Ast.
+
+The Set-ScriptExtent function can insert or replace text at a specified position in a file open in PowerShell Editor Services.
+
+You can use the Find-Ast function to easily find the desired extent.
 
 ## EXAMPLES
 
 ### -------------------------- EXAMPLE 1 --------------------------
-```
-$psEditor.GetEditorContext().CurrentFile.Tokens |
+
+```powershell
+Find-Ast { 'gci' -eq $_ } | Set-ScriptExtent -Text 'Get-ChildItem'
 ```
 
-Where-Object Text -ceq 'get-childitem' |
-    Set-ScriptExtent -Text 'Get-ChildItem'
+Replaces all instances of 'gci' with 'Get-ChildItem'
 
-Replaces all instances of 'get-childitem' with 'Get-ChildItem'
+### -------------------------- EXAMPLE 2 --------------------------
+
+```powershell
+$manifestAst = Find-Ast { 'FunctionsToExport' -eq $_ } | Find-Ast -First
+$manifestAst | Set-ScriptExtent -Text (gci .\src\Public).BaseName -AsArray
+```
+
+Replaces the current value of FunctionsToExport in a module manifest with a list of files in the Public folder as a string array literal expression.
 
 ## PARAMETERS
 
 ### -Text
-Specifies the text to insert in place of the extent.  Any object can be specified, but will
-be converted to a string before being passed to PowerShell Editor Services.```yaml
+
+Specifies the text to insert in place of the extent.  Any object can be specified, but will be converted to a string before being passed to PowerShell Editor Services.
+
+```yaml
 Type: PSObject
 Parameter Sets: (All)
 Aliases: Value
@@ -60,10 +74,13 @@ Accept wildcard characters: False
 ```
 
 ### -AsString
-Specifies to insert as a single quoted string expression.```yaml
+
+Specifies to insert as a single quoted string expression.
+
+```yaml
 Type: SwitchParameter
 Parameter Sets: AsString
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -73,11 +90,13 @@ Accept wildcard characters: False
 ```
 
 ### -AsArray
-Specifies to insert as a single quoted string list.  The list is separated by comma and
-new line, and will be adjusted to a hanging indent.```yaml
+
+Specifies to insert as a single quoted string list.  The list is separated by comma and new line, and will be adjusted to a hanging indent.
+
+```yaml
 Type: SwitchParameter
 Parameter Sets: AsArray
-Aliases: 
+Aliases:
 
 Required: True
 Position: Named
@@ -87,12 +106,13 @@ Accept wildcard characters: False
 ```
 
 ### -Extent
-{{Fill Extent Description}}
+
+Specifies the extent to replace within the editor.
 
 ```yaml
 Type: ElasticExtent
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: Named
@@ -102,13 +122,14 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
+
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Management.Automation.Language.IScriptExtent
-You can pass script extent objects to this function.  You can also pass objects with a property
-named "Extent".
+
+You can pass script extent objects to this function.  You can also pass objects with a property named "Extent".
 
 ## OUTPUTS
 
