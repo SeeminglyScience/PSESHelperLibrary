@@ -34,7 +34,7 @@ function Set-ScriptExtent {
         $extentList.Add($Extent)
     }
     end {
-        if ($psEditor) { $context = $psEditor.GetEditorContext() }
+        $context = [EditorServicesUtil]::GetContext()
 
         switch ($PSCmdlet.ParameterSetName) {
             # Insert text as a single string expression.

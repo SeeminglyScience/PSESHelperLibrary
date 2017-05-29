@@ -105,7 +105,7 @@ function Expand-MemberExpression {
             }
 
             if ($psEditor) {
-                $scriptFile     = GetScriptFile
+                $scriptFile     = [EditorServicesUtil]::GetScriptFile()
                 $line           = $scriptFile.GetLine($memberExpressionAst.Extent.StartLineNumber)
                 $indentOffset   = [regex]::Match($line, '^\s*').Value
             }

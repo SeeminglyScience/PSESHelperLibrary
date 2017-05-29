@@ -12,7 +12,7 @@ function Expand-Expression {
         [ValidateNotNullOrEmpty()]
         [Alias('Extent')]
         [System.Management.Automation.Language.IScriptExtent[]]
-        $InputObject = ($psEditor.GetEditorContext().SelectedRange | ConvertTo-ScriptExtent)
+        $InputObject = ([EditorServicesUtil]::GetContext().SelectedRange | ConvertTo-ScriptExtent)
     )
     process {
         foreach ($object in $InputObject) {

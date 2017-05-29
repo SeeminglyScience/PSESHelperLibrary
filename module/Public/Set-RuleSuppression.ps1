@@ -61,7 +61,7 @@ function Set-RuleSuppression {
                        -Id        MissingEditorContext `
                        -Category  InvalidOperation
         }
-        $scriptFile = GetScriptFile $Context.CurrentFile.Path
+        $scriptFile = [EditorServicesUtil]::GetScriptFile()
 
         $markers = Invoke-ScriptAnalyzer -Path $Context.CurrentFile.Path
 

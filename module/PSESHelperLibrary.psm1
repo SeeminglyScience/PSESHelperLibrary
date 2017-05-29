@@ -31,13 +31,18 @@ if ($psEditor) {
         GetField('editorSession', [System.Reflection.BindingFlags]'Instance, NonPublic').
         GetValue($EditorOperations)
 
-} else {
+# When invoking PSSA the $psEditor variable doesn't get loaded, so without this check we would mock
+# these types any time we run Set-RuleSuppression.
+} elseif (-not ('Microsoft.PowerShell.EditorServices.Workspace' -as [type])) {
+
     $typesToMock = 'Microsoft.PowerShell.EditorServices.BufferRange',
                    'Microsoft.PowerShell.EditorServices.BufferPosition',
                    'Microsoft.PowerShell.EditorServices.ScriptFile',
                    'Microsoft.PowerShell.EditorServices.Extensions.FileContext',
                    'Microsoft.PowerShell.EditorServices.Extensions.EditorCommand',
-                   'Microsoft.PowerShell.EditorServices.Extensions.EditorContext'
+                   'Microsoft.PowerShell.EditorServices.Extensions.EditorContext',
+                   'Microsoft.PowerShell.EditorServices.Extensions.EditorSession',
+                   'Microsoft.PowerShell.EditorServices.Extensions.EditorObject'
 
     foreach ($typeName in ($typesToMock)) {
         [ref].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add($typeName, [int])
@@ -48,6 +53,7 @@ if ($psEditor) {
 [System.Diagnostics.CodeAnalysis.SuppressMessage('UseDeclaredVarsMoreThanAssignments', '', Justification='Exported variable for customization.')]
 $PSESHLExcludeFromFileReferences = '\\Release\\|\\\.vscode\\|build.*\.ps1|debugHarness\.ps1'
 
+. "$PSScriptRoot\Classes\Util.ps1"
 . "$PSScriptRoot\Classes\Attributes.ps1"
 . "$PSScriptRoot\Classes\Expressions.ps1"
 . "$PSScriptRoot\Classes\Renderers.ps1"

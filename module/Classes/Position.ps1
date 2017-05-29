@@ -28,7 +28,7 @@ class ElasticHelper {
             return $instance
         }
 
-        $file     = GetScriptFile $fileName
+        $file     = [EditorServicesUtil]::GetScriptFile($fileName)
         $instance = [ElasticHelper]@{
             scriptFile = $file[0]
             snapshot   = $file.Contents

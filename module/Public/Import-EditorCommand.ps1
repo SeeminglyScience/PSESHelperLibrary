@@ -1,3 +1,5 @@
+using namespace System.Reflection
+
 function Import-EditorCommand {
     <#
     .EXTERNALHELP PSESHelperLibrary-help.xml

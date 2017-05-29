@@ -1,4 +1,4 @@
-using namespace System.Reflection
+using namespace System.Management.Automation.Language
 
 function ConvertTo-ScriptExtent {
     <#
@@ -47,7 +47,7 @@ function ConvertTo-ScriptExtent {
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
         [Alias('File', 'FileName')]
         [string]
-        $FilePath,
+        $FilePath = [EditorServicesUtil]::GetContext().CurrentFile.Path,
 
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName='ByBuffer')]
         [Alias('Start')]
@@ -59,21 +59,25 @@ function ConvertTo-ScriptExtent {
         [Microsoft.PowerShell.EditorServices.BufferPosition]
         $EndBuffer
     )
-    begin {
-        $flags = [BindingFlags]'NonPublic, Instance'
-        if ($psEditor) { $context = $psEditor.GetEditorContext() }
-    }
     process {
-        if ($InputObject -is [System.Management.Automation.Language.IScriptExtent]) { return $InputObject }
+        # Already an InternalScriptExtent or is empty.
+        $returnAsIs = $InputObject -is [IScriptExtent] -and
+                     (0 -ne $InputObject.StartOffset   -or
+                      0 -ne $InputObject.EndOffset     -or
+                      $InputObject -eq [PositionUtil]::EmptyExtent)
 
-        if ($StartOffsetNumber) {
+        if ($returnAsIs) { return $InputObject }
+
+        if ($StartOffsetNumber -and $InputObject -isnot [IScriptExtent]) {
             $startOffset = $StartOffsetNumber
             $endOffset   = $EndOffsetNumber
 
+            # Allow creating a single position extent with just the offset parameter.
             if (-not $EndOffsetNumber) {
                 $endOffset = $startOffset
             }
-            $scriptFile = GetScriptFile
+
+            $helperSource = [PositionUtil]::GetFileAst($FilePath).Extent
         } else {
             if ($StartBuffer) {
                 $StartLineNumber   = $StartBuffer.Line
@@ -81,38 +85,20 @@ function ConvertTo-ScriptExtent {
                 $EndLineNumber     = $EndBuffer.Line
                 $EndColumnNumber   = $EndBuffer.Column
             }
+            # If we have PSES context we can get offsets from ScriptFile. Otherwise, we need to make
+            # a line start -> offset map.
+            $scriptFile   = [EditorServicesUtil]::GetScriptFile($FilePath)
+            $helperSource = $scriptFile.ScriptAst.Extent
+            $mapSource    = $scriptFile
 
-            # We use the FileContext from GetEditorContext here as well, but we'd have to create a BufferRange
-            # to get line text.
-            if (-not $FilePath) {
-                $FilePath = $context.CurrentFile.Path
+            if (-not $helperSource -or -not $mapSource) {
+                $helperSource = [PositionUtil]::GetFileAst($FilePath).Extent
+                $mapSource    = [PositionUtil]::GetLineMap($helperSource.Text)
             }
-            $scriptFile  = GetScriptFile -Path $FilePath
-            $startOffset = $scriptFile.GetOffsetAtPosition($StartLineNumber, $StartColumnNumber)
-            $endOffset   = $startOffset
 
-            $endIsSame = $EndLineNumber   -eq $StartLineNumber -and
-                        $EndColumnNumber -eq $StartColumnNumber
-
-            if (($EndLineNumber -and $EndColumnNumber) -and -not $endIsSame) {
-                $endOffset = $scriptFile.GetOffsetAtPosition($EndLineNumber, $EndColumnNumber)
-            }
+            $startOffset = [PositionUtil]::GetOffsetFromPosition($mapSource, $StartLineNumber, $StartColumnNumber)
+            $endOffset   = [PositionUtil]::GetOffsetFromPosition($mapSource, $EndLineNumber, $EndColumnNumber)
         }
-
-        $positionHelper = $scriptFile.ScriptAst.Extent.GetType().
-            GetProperty('PositionHelper', $flags).
-            GetValue($scriptFile.ScriptAst.Extent)
-
-        [ref].Assembly.GetType('System.Management.Automation.Language.InternalScriptExtent').
-            GetConstructor(
-                <# bindingAttr:     #> $flags,
-                <# binder:          #> $null,
-                <# types:           #> ($positionHelper.GetType(), [int], [int] -as [type[]]),
-                <# modifiers:       #> 3
-            ).Invoke(@(
-                <# _positionHelper: #> $positionHelper,
-                <# startOffset:     #> $startOffset,
-                <# endOffset:       #> $endOffset
-            ))
+        return [PositionUtil]::CreateExtent($helperSource, $startOffset, $endOffset)
     }
 }

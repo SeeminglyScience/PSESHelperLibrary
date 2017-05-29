@@ -85,7 +85,7 @@ function Find-Ast {
         if ($Ancestor.IsPresent) {
             $Family = $Before = $true
         }
-        if ($psEditor) { $context = $psEditor.GetEditorContext() }
+        $context = [EditorServicesUtil]::GetContext()
 
         if (-not $Ast -and $context) {
             $Ast = $context.CurrentFile.Ast

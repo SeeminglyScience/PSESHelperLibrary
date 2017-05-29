@@ -4,8 +4,7 @@ using namespace System.Management.Automation.Language
 # completely empty extents and the parameter shouldn't interfere with break points.
 function NewContextParameterAst {
     # Empty extent that will be used for every element.
-    $ee = [ScriptExtent]::new([ScriptPosition]::new('', 0, 0, ''),
-                              [ScriptPosition]::new('', 0, 0, ''))
+    $ee = [PositionUtil]::EmptyExtent
 
     $typeConstraint = [TypeConstraintAst]::new(
         <# extent:   #> $ee,
