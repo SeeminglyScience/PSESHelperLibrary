@@ -95,6 +95,10 @@ function ConvertTo-ScriptExtent {
                 $helperSource = [PositionUtil]::GetFileAst($FilePath).Extent
                 $mapSource    = [PositionUtil]::GetLineMap($helperSource.Text)
             }
+            if (-not $EndLineNumber -and -not $EndColumnNumber) {
+                $EndLineNumber   = $StartLineNumber
+                $EndColumnNumber = $StartColumnNumber
+            }
 
             $startOffset = [PositionUtil]::GetOffsetFromPosition($mapSource, $StartLineNumber, $StartColumnNumber)
             $endOffset   = [PositionUtil]::GetOffsetFromPosition($mapSource, $EndLineNumber, $EndColumnNumber)

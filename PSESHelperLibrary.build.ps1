@@ -34,7 +34,8 @@ task Analyze -Before Install {
                           -ErrorVariable pssaErrors `
                           -Recurse
     $pssaErrors.Where{-not (
-        $PSItem.Exception.Message -match '"ModuleTransformation": "Value cannot be null.'
+        $PSItem.Exception.Message -match '"ModuleTransformation": "Value cannot be null.' -or
+        $PSItem.Exception.Message -match 'Unable to find type'
     )}.ForEach{
         throw $PSItem
     }

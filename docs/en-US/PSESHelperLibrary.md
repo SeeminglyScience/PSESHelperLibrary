@@ -36,11 +36,19 @@ The Find-Ast function can be used to easily find a specific ast from a starting 
 default children asts will be searched, but ancestor asts can also be searched by specifying
 the "Ancestor" switch parameter.
 
+### [Get-Token](Get-Token.md)
+
+The Get-Token function can retrieve tokens from a file location, current editor context, or from a ScriptExtent object. You can then use the ScriptExtent functions to manipulate the text at it's location.
+
 ### [Import-EditorCommand](Import-EditorCommand.md)
 
 The Import-EditorCommand function will search the specified module for functions tagged as editor commands and register them with PowerShell Editor Services. By default, if a module is specified only exported functions will be processed. However, if this function is called from a module, and the module is specified in the "Module" parameter, the function table for the module's script scope will be processed.
 
 Alternatively, you can specify command info objects (like those from the Get-Command cmdlet) to be processed directly.
+
+### [Join-ScriptExtent](Join-ScriptExtent.md)
+
+The Join-ScriptExtent function will combine all ScriptExtent objects piped to it into a single extent.
 
 ### [Set-RuleSupression](Set-RuleSupression.md)
 
@@ -53,3 +61,7 @@ As an editor command it will attempt to suppress the Ast closest to the current 
 The Set-ScriptExtent function can insert or replace text at a specified position in a file open in PowerShell Editor Services.
 
 You can use the Find-Ast function to easily find the desired extent.
+
+### [Test-ScriptExtent](Test-ScriptExtent.md)
+
+The Test-ScriptExtent function can be used to determine if a ScriptExtent object is before, after, or inside another ScriptExtent object.  You can also test for any combination of these with separate ScriptExtent objects to test against.

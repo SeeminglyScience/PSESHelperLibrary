@@ -4,7 +4,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-ScriptExtent
+# Join-ScriptExtent
 
 ## SYNOPSIS
 
@@ -13,26 +13,23 @@ Combine script extents.
 ## SYNTAX
 
 ```powershell
-Get-ScriptExtent [[-Extent] <IScriptExtent[]>] [<CommonParameters>]
+Join-ScriptExtent [[-Extent] <IScriptExtent[]>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-Get the collective extent of any number of IScriptExtent objects.
+The Join-ScriptExtent function will combine all ScriptExtent objects piped to it into a single extent.
 
 ## EXAMPLES
 
 ### -------------------------- EXAMPLE 1 --------------------------
 
 ```powershell
-$sb = {
-    'This is a scriptblock'
-    'With two extents'
-}
-$sb.Ast | Find-Ast { $_.Value } | Get-ScriptExtent
+$ast = Find-Ast { $_.Arguments.Count -gt 4 } -First
+$ast.Arguments[0..1] | Join-ScriptExtent | Set-ScriptExtent -Text ''
 ```
 
-Returns the combined extent of the two string expressions.
+Finds the first InvokeMemberExpression ast that has over 4 arguments and removes the first two.
 
 ## PARAMETERS
 
