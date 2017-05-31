@@ -64,26 +64,26 @@ function Import-EditorCommand {
         if ($Command) {
             $commands = ImportBinderMetadata -Command $Command @importMetadataSplat
         }
-        foreach ($command in $commands) {
+        foreach ($aCommand in $commands) {
             # If we get something back that isn't CommandInfo, then I likely didn't null the output
             # of one of the reflection statements.
-            if ($command -isnot [System.Management.Automation.CommandInfo]) {
+            if ($aCommand -isnot [System.Management.Automation.CommandInfo]) {
                 ThrowError -Exception ([InvalidOperationException]::new($Strings.InvalidBinderResult)) `
                            -Id        InvalidBinderResult `
                            -Category  InvalidResult `
-                           -Target    $command
+                           -Target    $aCommand
             }
             # Get the attribute from our command to get name info.
-            $details = $command.ScriptBlock.Attributes.Where({
+            $details = $aCommand.ScriptBlock.Attributes.Where({
                 'PSEditorCommand' -eq $PSItem.TypeId
             }, 'First')[0]
 
-            if (-not $details.SkipRegister) {
+            if (-not $details.SkipRegister -and $details) {
                 # Name: Expand-Expression becomes ExpandExpression
-                if (-not $details.Name) { $details.Name = $command.Name -replace '-' }
+                if (-not $details.Name) { $details.Name = $aCommand.Name -replace '-' }
 
                 # DisplayName: Expand-Expression becomes Expand Expression
-                if (-not $details.DisplayName) { $details.DisplayName = $command.Name -replace '-', ' ' }
+                if (-not $details.DisplayName) { $details.DisplayName = $aCommand.Name -replace '-', ' ' }
 
                 # If the editor command is already loaded skip unless force is specified.
                 if ($editorCommands.ContainsKey($details.Name)) {
@@ -100,7 +100,7 @@ function Import-EditorCommand {
                     <# commandName:    #> $details.Name,
                     <# displayName:    #> $details.DisplayName,
                     <# suppressOutput: #> $details.SuppressOutput,
-                    <# scriptBlock:    #> [scriptblock]::Create(('{0} -Context $args[0]' -f $command.Name))
+                    <# scriptBlock:    #> [scriptblock]::Create(('{0} -Context $args[0]' -f $aCommand.Name))
                 )
                 $null = $psEditor.RegisterCommand($editorCommand)
 

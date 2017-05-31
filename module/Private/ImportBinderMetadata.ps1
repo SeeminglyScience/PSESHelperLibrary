@@ -56,13 +56,18 @@ function ImportBinderMetadata {
                 GetMethod('GetFunctionTableAtScope', [BindingFlags]'Instance, NonPublic').
                 Invoke($internal, @('Script'))
 
-            $Command = $functionTable.Values
-        }
+            # Ensure we don't try to process imported external commands (e.g. the functions from this module)
+            $commands = $functionTable.Values.Where{
+                $PSItem.ScriptBlock.Module.Name -eq $SessionState.Module.Name
+            }
+         } else {
+            $commands = $Command
+         }
 
-        foreach ($aCommand in $Command) {
+        foreach ($aCommand in $commands) {
             $hasAttribute = $aCommand.ScriptBlock.Attributes.TypeId.Foreach{
                 if ($PSItem) {
-                    $Attribute.IsAssignableFrom($PSItem)
+                    $Attribute.Name -eq $PSItem.Name
                 }
             } -contains $true
 
@@ -71,7 +76,18 @@ function ImportBinderMetadata {
                     GetProperty('SessionStateInternal', [BindingFlags]'Instance, NonPublic').
                     GetValue($aCommand.ScriptBlock)
 
-                $function      = $aCommand.ScriptBlock.Ast
+                $function = $aCommand.ScriptBlock.Ast
+
+                # Sometimes the command's scriptblock is a child of the function definition. Need to
+                # look into why that is.
+                if ($function -isnot [FunctionDefinitionAst]) {
+                    for ($parent = $function; $parent; $parent = $parent.Parent) {
+                        if ($parent -is [FunctionDefinitionAst]) {
+                            $function = $parent
+                            break
+                        }
+                    }
+                }
                 $oldParamBlock = $function.Body.ParamBlock
 
                 # Can't just cast oldParamAsts because the command could not have any other parameters.
