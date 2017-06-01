@@ -37,7 +37,10 @@ function Get-Token {
                ($Token.Extent.StartOffset -ge $Extent.StartOffset -and
                 $Token.Extent.EndOffset   -le $Extent.EndOffset)
             }
-            return [Enumerable]::Where($tokens, $predicate)
+            if ($tokens){
+                $result = [Enumerable]::Where($tokens, $predicate)
+            }
+            return $result
         }
 
         return [PositionUtil]::GetFileTokens([EditorServicesUtil]::GetContext().CurrentFile.Path)

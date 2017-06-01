@@ -63,7 +63,7 @@ function Set-ScriptExtent {
 
             if ($needsIndentFix) {
                 # I'd rather let PSSA handle this when there are more formatting options.
-                $indentOffset = ' ' * $aExtent.StartColumnNumber
+                $indentOffset = ' ' * ($aExtent.StartColumnNumber - 1)
                 $aText = $aText -split '\r?\n' `
                                 -join ([Environment]::NewLine + $indentOffset)
             }
