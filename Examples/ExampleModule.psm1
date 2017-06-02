@@ -136,18 +136,29 @@ params(p) ::= "<p.ParameterType> $<p.Name>"
 
             $targetExtent = $ast.Extent
 
-            $resolvedType = $ast.TypeName -as [type]
+            $resolvedType = $ast.TypeName.Name -as [type]
 
             if (-not $resolvedType) {
-                Find-Ast {  }
+                # Type resolution scope is this function, so we need to pull the namespaces from
+                # the current file and test against that.
+                $using = Find-Ast { $_ -is [UsingStatementAst] -and
+                                    $_.UsingStatementKind -eq 'Namespace' }
+
+                foreach ($namespace in $using.Name) {
+                    if ($resolvedType = ('{0}.{1}' -f $using.Name, $ast.TypeName.Name) -as [type]) {
+                        break
+                    }
+                }
             }
+            $Type = $resolvedType
         }
-        foreach ($aType in $Type) {
-            $result = Invoke-StringTemplate -Group $group -Name class -Parameters ($Type)
+        $result = foreach ($aType in $Type) {
+            Invoke-StringTemplate -Group $group -Name class -Parameters ($aType)
         }
-        Set-ExtentText -Extent $ast.Extent -Value $result
+        Set-ScriptExtent -Extent $targetExtent -Text $result
     }
 }
+
 # Orders using statements by type (assembly > module > namespace) then alphabetically
 function Set-UsingStatementOrder {
     [CmdletBinding()]
